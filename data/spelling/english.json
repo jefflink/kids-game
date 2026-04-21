@@ -1,0 +1,18 @@
+[
+  {
+    "name": "-ee",
+    "words": ["see", "tee", "pee", "fee", "bee"]
+  },
+  {
+    "name": "-ay",
+    "words": ["say", "pay", "may", "day", "way", "play", "stay", "sway", "bray", "clay"]
+  },
+  {
+    "name": "-ob",
+    "words": ["sob", "rob", "mob", "cob", "job", "snob", "blob", "knob"]
+  },
+  {
+    "name": "-en",
+    "words": ["ten", "pen", "men", "den", "hen"]
+  }
+]

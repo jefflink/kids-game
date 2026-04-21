@@ -415,38 +415,49 @@ function renderLearn(){
 function sayWord(w,lang,el){speak(w,lang);if(el){el.classList.add('speaking');setTimeout(()=>el.classList.remove('speaking'),500);}}
 
 // ===================== TRACING =====================
-function openTrace(char){
+function openTrace(word){
+  const chars = [...word]; // split into individual characters
+  const boxes = chars.map((ch,i)=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="trace-canvas-wrap" id="traceWrap${i}" style="width:${chars.length>2?'140px':'180px'};height:${chars.length>2?'140px':'180px'};">
+        <div class="trace-guide" style="font-size:${chars.length>2?'6rem':'8rem'};">${ch}</div>
+        <canvas class="trace-canvas" id="traceCanvas${i}" width="${chars.length>2?140:180}" height="${chars.length>2?140:180}"></canvas>
+      </div>
+      <span style="font-size:0.75rem;color:var(--purple);font-weight:700;">${ch}</span>
+    </div>`).join('');
+
   document.getElementById('traceOverlay').innerHTML=`
     <div class="trace-overlay" onclick="if(event.target===this)closeTrace();">
-      <div class="trace-modal">
-        <div class="trace-title">✏️ Trace: <span style="font-size:1.5rem;">${char}</span></div>
-        <div class="trace-canvas-wrap" id="traceWrap">
-          <div class="trace-guide">${char}</div>
-          <canvas class="trace-canvas" id="traceCanvas" width="260" height="260"></canvas>
+      <div class="trace-modal" style="max-width:${Math.max(400, chars.length*160+60)}px;">
+        <div class="trace-title">✏️ Trace: <span style="font-size:1.5rem;">${word}</span></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px 0;">
+          ${boxes}
         </div>
         <div class="trace-btns">
-          <button class="btn btn-yellow" onclick="clearTrace()">🔄 Clear</button>
-          <button class="btn btn-blue" onclick="speak('${char}','zh')">🔊 Hear</button>
+          <button class="btn btn-yellow" onclick="clearAllTrace(${chars.length})">🔄 Clear</button>
+          <button class="btn btn-blue" onclick="speak('${word}','zh')">🔊 Hear</button>
           <button class="btn btn-pink" onclick="closeTrace()">✓ Done!</button>
         </div>
       </div>
     </div>`;
-  initTraceCanvas();
+  for(let i=0;i<chars.length;i++) initTraceCanvas(i);
 }
 
 function closeTrace(){document.getElementById('traceOverlay').innerHTML='';confetti(15);}
 
-function clearTrace(){
-  const c=document.getElementById('traceCanvas');
-  if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);
+function clearAllTrace(count){
+  for(let i=0;i<count;i++){
+    const c=document.getElementById('traceCanvas'+i);
+    if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);
+  }
 }
 
-function initTraceCanvas(){
-  const c=document.getElementById('traceCanvas');
+function initTraceCanvas(idx){
+  const c=document.getElementById('traceCanvas'+idx);
   if(!c) return;
   const ctx=c.getContext('2d');
   let drawing=false;
-  ctx.strokeStyle='#e91e8c';ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='#e91e8c';ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';
 
   function getPos(e){
     const r=c.getBoundingClientRect();

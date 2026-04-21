@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fishing",
+    "title": "Fishing Game",
+    "description": "Catch as many fishes as you can!",
+    "emoji": "🫧"
+  },
+  {
+    "id": "spelling",
+    "title": "Learn Spelling",
+    "description": "Help kids learn spelling!",
+    "emoji": "🦕"
+  },
+  {
+    "id": "tens-and-ones",
+    "title": "Tens & Ones",
+    "description": "Learn tens and ones interactively!",
+    "emoji": "🎨"
+  }
+]

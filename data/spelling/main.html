@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hannah's Unicorn Spelling Game ✨</title>
+<link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pink: #ff6eb4; --pink2: #e91e8c; --pink3: #ffd6ec;
+  --purple: #b96fff; --blue: #6ec6ff; --yellow: #ffe066;
+  --mint: #6fffd4; --orange: #ffb347; --red: #ff6b6b;
+  --bg: #fff0fa; --card: #fff8fe;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); min-height: 100vh; overflow-x: hidden; position: relative; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: linear-gradient(135deg, rgba(255,110,180,0.12) 0%, rgba(185,111,255,0.12) 50%, rgba(110,198,255,0.08) 100%);
+  animation: bgShift 10s ease-in-out infinite alternate; z-index: 0; pointer-events: none;
+}
+@keyframes bgShift { 0%{filter:hue-rotate(0deg);} 100%{filter:hue-rotate(25deg);} }
+.sparkle { position:fixed; pointer-events:none; animation:floatUp linear infinite; opacity:0.55; z-index:0; }
+@keyframes floatUp { 0%{transform:translateY(105vh) rotate(0deg);opacity:0.55;} 100%{transform:translateY(-8vh) rotate(360deg);opacity:0;} }
+
+.app { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:14px 12px 52px; }
+
+/* HEADER */
+header { text-align:center; padding:18px 0 8px; }
+.hdr-uni { font-size:3.5rem; display:block; animation:bounce 2.2s ease-in-out infinite; filter:drop-shadow(0 4px 14px rgba(185,111,255,0.5)); }
+@keyframes bounce { 0%,100%{transform:translateY(0) rotate(-5deg);}50%{transform:translateY(-12px) rotate(5deg);} }
+h1 { font-family:'Bubblegum Sans',cursive; font-size:clamp(1.55rem,5.5vw,2.7rem);
+  background:linear-gradient(135deg,var(--pink2),var(--pink),var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  line-height:1.2; margin-top:5px; }
+.subtitle { color:var(--purple); font-size:0.88rem; font-weight:700; margin-top:2px; }
+
+/* TABS */
+.tabs { display:flex; gap:5px; margin:16px 0 0; justify-content:center; flex-wrap:wrap; }
+.tab-btn { font-family:'Bubblegum Sans',cursive; font-size:0.9rem; padding:8px 16px;
+  border:2.5px solid transparent; border-radius:999px; cursor:pointer; transition:all 0.2s; }
+.tab-btn[data-tab="parent"]  { background:linear-gradient(135deg,#ffb347,#ff6eb4); color:white; border-color:#ff6eb4; }
+.tab-btn[data-tab="learn"]   { background:linear-gradient(135deg,#ff6eb4,#b96fff); color:white; border-color:#b96fff; }
+.tab-btn[data-tab="test"]    { background:linear-gradient(135deg,#b96fff,#6ec6ff); color:white; border-color:#6ec6ff; }
+.tab-btn[data-tab="exam"]    { background:linear-gradient(135deg,#6ec6ff,#6fffd4); color:#333; border-color:#6ec6ff; }
+.tab-btn[data-tab="rewards"] { background:linear-gradient(135deg,#ffe066,#ffb347); color:#555; border-color:#ffb347; }
+.tab-btn.active { transform:scale(1.09) translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,0.18); }
+.tab-btn:not(.active) { opacity:0.58; transform:scale(0.96); }
+.tab-btn:hover { opacity:1!important; transform:scale(1.05) translateY(-2px)!important; }
+
+/* PANELS */
+.panel { display:none; }
+.panel.active { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;} }
+
+/* CARD */
+.card { background:var(--card); border-radius:22px; padding:22px 18px; margin-top:16px;
+  box-shadow:0 8px 30px rgba(185,111,255,0.1),0 2px 8px rgba(0,0,0,0.05); border:2px solid rgba(255,110,180,0.14); }
+.card-title { font-family:'Bubblegum Sans',cursive; font-size:1.25rem; color:var(--purple); margin-bottom:13px; display:flex; align-items:center; gap:8px; }
+
+/* BUTTONS */
+.btn { font-family:'Bubblegum Sans',cursive; font-size:0.92rem; padding:9px 18px;
+  border:none; border-radius:11px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.btn:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,0.14); }
+.btn:active { transform:translateY(0); }
+.btn-pink   { background:linear-gradient(135deg,var(--pink2),var(--pink)); color:white; }
+.btn-purple { background:linear-gradient(135deg,var(--pink),var(--purple)); color:white; }
+.btn-blue   { background:linear-gradient(135deg,var(--purple),var(--blue)); color:white; }
+.btn-green  { background:linear-gradient(135deg,var(--mint),var(--blue)); color:#333; }
+.btn-yellow { background:linear-gradient(135deg,var(--yellow),var(--orange)); color:#555; }
+.btn-red    { background:linear-gradient(135deg,#ff6b6b,#ffb347); color:white; }
+
+/* INPUT */
+.txt-in { padding:10px 14px; border:2.5px solid var(--purple); border-radius:11px;
+  font-family:'Nunito',sans-serif; font-size:0.95rem; font-weight:700; color:#444;
+  outline:none; transition:border-color 0.2s,box-shadow 0.2s; background:white; }
+.txt-in:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(255,110,180,0.2); }
+
+/* ===== PARENT ===== */
+.family-list { display:flex; flex-direction:column; gap:13px; }
+.fam-block { background:white; border-radius:16px; padding:14px; border:2.5px solid rgba(255,110,180,0.22); }
+.fam-header { display:flex; align-items:center; gap:8px; margin-bottom:9px; flex-wrap:wrap; }
+.fam-badge { font-family:'Bubblegum Sans',cursive; font-size:1.2rem; color:var(--pink2);
+  background:var(--pink3); border-radius:8px; padding:2px 11px; }
+.chips-row { display:flex; flex-wrap:wrap; gap:6px; min-height:32px; }
+.wchip { display:inline-flex; align-items:center; gap:4px; padding:4px 11px;
+  border-radius:999px; font-weight:800; font-size:0.88rem; color:white;
+  animation:popIn 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { from{transform:scale(0.4);opacity:0;}to{transform:scale(1);opacity:1;} }
+.wchip .rm { background:rgba(255,255,255,0.32); border:none; color:white; border-radius:50%;
+  width:15px; height:15px; font-size:0.6rem; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; line-height:1; font-weight:900; }
+.wchip .rm:hover { background:rgba(255,255,255,0.6); }
+.add-row { display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; }
+.ch0{background:linear-gradient(135deg,#ff6eb4,#e91e8c);}
+.ch1{background:linear-gradient(135deg,#b96fff,#7c3aed);}
+.ch2{background:linear-gradient(135deg,#6ec6ff,#2196f3);}
+.ch3{background:linear-gradient(135deg,#ffb347,#e67e22);}
+.ch4{background:linear-gradient(135deg,#6fffd4,#10b981);color:#333!important;}
+
+/* ===== LEARN ===== */
+.fam-section { margin-bottom:18px; }
+.fam-label { font-family:'Bubblegum Sans',cursive; font-size:1.1rem; color:var(--pink2);
+  background:var(--pink3); border-radius:999px; padding:3px 13px; display:inline-block; margin-bottom:9px; }
+.learn-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(115px,1fr)); gap:9px; }
+.learn-card { background:white; border-radius:13px; padding:13px 7px; text-align:center;
+  border:2.5px solid transparent; cursor:pointer; transition:all 0.2s; }
+.learn-card:hover { transform:translateY(-4px) scale(1.05); box-shadow:0 8px 18px rgba(0,0,0,0.1); }
+.learn-card.speaking { animation:pulse 0.3s ease; }
+@keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.1);} }
+.learn-word { font-family:'Bubblegum Sans',cursive; font-size:1.35rem; display:block; margin-bottom:4px; color:var(--pink2); }
+.learn-icon { font-size:1.1rem; opacity:0.65; }
+/* Pink letter shades */
+.p0{color:#ff4da6;}.p1{color:#e91e8c;}.p2{color:#c2185b;}.p3{color:#ff6eb4;}.p4{color:#ad1457;}.p5{color:#f06292;}.p6{color:#ff85c2;}
+/* border colors */
+.b0{border-color:#ff4da6;}.b1{border-color:#b96fff;}.b2{border-color:#6ec6ff;}.b3{border-color:#ffb347;}.b4{border-color:#6fffd4;}
+
+/* ===== TEST / EXAM ===== */
+.test-area { text-align:center; }
+.prog-wrap { background:rgba(185,111,255,0.12); border-radius:999px; height:12px; margin-bottom:16px; overflow:hidden; }
+.prog-bar { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--pink2),var(--pink),var(--purple)); transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1); min-width:8px; }
+.score-pill { display:inline-flex; align-items:center; gap:6px; background:white; border-radius:999px;
+  padding:6px 16px; margin-bottom:10px; border:2px solid rgba(255,110,180,0.22); font-weight:800; color:var(--purple); font-size:0.88rem; }
+.fam-tag { font-family:'Bubblegum Sans',cursive; font-size:0.82rem; color:white;
+  background:linear-gradient(135deg,var(--pink2),var(--purple)); border-radius:999px;
+  padding:3px 13px; display:inline-block; margin-bottom:7px; }
+.test-prompt { font-family:'Bubblegum Sans',cursive; font-size:1.05rem; color:var(--purple); margin-bottom:4px; }
+.test-uni { font-size:2.8rem; display:block; margin:5px auto; animation:bounce 2s ease-in-out infinite; filter:drop-shadow(0 4px 12px rgba(185,111,255,0.4)); }
+.hint-row { display:flex; justify-content:center; gap:5px; margin:11px 0; flex-wrap:wrap; }
+.hbox { width:35px; height:40px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  font-family:'Bubblegum Sans',cursive; font-size:1.25rem; color:white; box-shadow:0 3px 8px rgba(0,0,0,0.1); transition:all 0.3s; }
+.hc0{background:#ff4da6;}.hc1{background:#e91e8c;}.hc2{background:#c2185b;}.hc3{background:#ff6eb4;}.hc4{background:#ad1457;}.hc5{background:#f06292;}.hc6{background:#ff85c2;color:#555!important;}
+.test-input-wrap { display:flex; gap:8px; justify-content:center; margin:13px 0; flex-wrap:wrap; }
+.test-input { font-family:'Bubblegum Sans',cursive; font-size:1.45rem; padding:10px 16px;
+  border:3px solid var(--purple); border-radius:13px; text-align:center; width:200px; color:#444;
+  outline:none; background:white; transition:border-color 0.2s,box-shadow 0.2s; }
+.test-input:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(255,110,180,0.2); }
+.test-input.ok  { border-color:#4caf50; background:#f0fff4; }
+.test-input.err { border-color:var(--red); background:#fff0f0; animation:shake 0.4s; }
+@keyframes shake { 0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);} }
+.fb { font-family:'Bubblegum Sans',cursive; font-size:1.35rem; min-height:1.9rem; margin:4px 0; }
+.fb.ok  { color:#4caf50; }
+.fb.err { color:var(--red); }
+.test-btns { display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-bottom:7px; }
+.fam-select-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:9px; margin:10px 0 16px; }
+.fam-sel { background:white; border-radius:13px; padding:11px; text-align:center; border:2.5px solid var(--pink3); cursor:pointer; transition:all 0.2s; }
+.fam-sel:hover { transform:translateY(-3px); box-shadow:0 6px 16px rgba(0,0,0,0.1); }
+.fam-sel.sel { border-color:var(--pink2); background:var(--pink3); }
+.fam-sel-name { font-family:'Bubblegum Sans',cursive; font-size:1.15rem; color:var(--pink2); }
+.fam-sel-ct { font-size:0.78rem; color:#aaa; }
+
+/* COMPLETION */
+.compl { text-align:center; padding:14px 0; }
+.big-uni { font-size:4.2rem; display:block; animation:celebrate 1s ease-in-out infinite alternate; filter:drop-shadow(0 6px 20px rgba(185,111,255,0.55)); }
+@keyframes celebrate { 0%{transform:scale(1) rotate(-8deg);}100%{transform:scale(1.15) rotate(8deg);} }
+.compl h2 { font-family:'Bubblegum Sans',cursive; font-size:1.85rem;
+  background:linear-gradient(135deg,var(--pink2),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:9px 0 3px; }
+
+/* ===== REWARDS ===== */
+.stamp-card { border:3px solid var(--pink3); }
+.stamp-title { font-family:'Bubblegum Sans',cursive; font-size:1.25rem; color:var(--pink2); text-align:center; margin-bottom:3px; }
+.stamp-sub { text-align:center; color:#aaa; font-size:0.82rem; margin-bottom:14px; }
+.stamps-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:360px; margin:0 auto 14px; }
+.stamp-slot { aspect-ratio:1; border-radius:13px; border:2.5px dashed #ffc2e2; display:flex; align-items:center; justify-content:center;
+  font-size:2rem; position:relative; background:#fff8fe; transition:all 0.3s; }
+.stamp-slot.filled { border-style:solid; border-color:var(--pink); background:linear-gradient(135deg,#fff0fa,#ffe4f5); animation:stampPop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes stampPop { 0%{transform:scale(0) rotate(-20deg);}70%{transform:scale(1.2) rotate(5deg);}100%{transform:scale(1) rotate(0);} }
+.stamp-num { position:absolute; bottom:2px; right:5px; font-size:0.62rem; color:#ddd; font-weight:900; }
+.redeem-wrap { text-align:center; margin-top:6px; }
+
+/* COLLECTION */
+.coll-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:11px; margin-top:10px; }
+.uni-slot { background:white; border-radius:15px; padding:13px 7px; text-align:center;
+  border:2.5px solid var(--pink3); transition:all 0.25s; position:relative; overflow:hidden; }
+.uni-slot.locked { opacity:0.32; filter:grayscale(0.7); }
+.uni-slot.owned { border-color:var(--pink); box-shadow:0 4px 14px rgba(255,110,180,0.2); }
+.uni-slot.new-uni { animation:uniPop 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes uniPop { 0%{transform:scale(0) rotate(-15deg);}70%{transform:scale(1.25) rotate(5deg);}100%{transform:scale(1) rotate(0);} }
+.uni-canvas { display:block; width:78px; height:78px; margin:0 auto 7px; }
+.uni-name { font-family:'Bubblegum Sans',cursive; font-size:0.82rem; color:var(--pink2); }
+.uni-hint { font-size:0.68rem; color:#ccc; margin-top:2px; }
+.new-bdg { position:absolute; top:-5px; right:-5px; background:var(--yellow); border-radius:999px;
+  font-size:0.62rem; font-weight:900; color:#7d4e00; padding:2px 5px; border:2px solid white; }
+
+/* CONFETTI */
+.cfp { position:fixed; border-radius:2px; pointer-events:none; z-index:999; animation:cfFall linear forwards; }
+@keyframes cfFall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;} }
+
+.no-msg { text-align:center; padding:26px 14px; color:#bbb; }
+.no-msg span { font-size:2.3rem; display:block; margin-bottom:7px; }
+
+@media(max-width:460px) {
+  .stamps-grid{gap:7px;} .test-input{width:175px;font-size:1.28rem;}
+  .coll-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="hdr-uni">🦄</span>
+    <h1>Hannah's Unicorn Spelling Game</h1>
+    <p class="subtitle">✨ Learn · Spell · Collect Unicorns! ✨</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="parent">🌸 Parent</button>
+    <button class="tab-btn" data-tab="learn">📖 Learn</button>
+    <button class="tab-btn" data-tab="test">⭐ Test</button>
+    <button class="tab-btn" data-tab="exam">🎓 Exam</button>
+    <button class="tab-btn" data-tab="rewards">🏆 Rewards</button>
+  </nav>
+
+  <!-- PARENT -->
+  <div class="panel active" id="panel-parent">
+    <div class="card">
+      <div class="card-title">🌈 Word Family Manager</div>
+      <div class="family-list" id="familyList"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <input type="text" id="newFamIn" class="txt-in" placeholder="New family e.g. -ee" style="width:155px;" maxlength="12" />
+        <button class="btn btn-pink" onclick="addFamily()">+ Add Family</button>
+      </div>
+      <hr style="margin:14px 0;border:none;border-top:1.5px solid var(--pink3);">
+      <button class="btn btn-yellow" onclick="loadK1()">📋 Load K1 Term 3 Word List</button>
+      <p style="color:#bbb;font-size:0.78rem;margin-top:7px;">Loads -ee, -ay, -ob, -en families with their words</p>
+    </div>
+  </div>
+
+  <!-- LEARN -->
+  <div class="panel" id="panel-learn">
+    <div class="card">
+      <div class="card-title">📖 Tap a word to hear it! 🔊</div>
+      <div id="learnContent"></div>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div class="panel" id="panel-test">
+    <div class="card"><div id="testInner"></div></div>
+  </div>
+
+  <!-- EXAM -->
+  <div class="panel" id="panel-exam">
+    <div class="card"><div id="examInner"></div></div>
+  </div>
+
+  <!-- REWARDS -->
+  <div class="panel" id="panel-rewards">
+    <div class="card stamp-card">
+      <div class="stamp-title">🌟 Hannah's Star Stamp Card 🌟</div>
+      <div class="stamp-sub">Get a stamp for every perfect Exam! Fill all 8 to redeem a prize! 🎁</div>
+      <div class="stamps-grid" id="stampsGrid"></div>
+      <div class="redeem-wrap" id="redeemWrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🦄 Unicorn Collection</div>
+      <p style="color:#aaa;font-size:0.82rem;margin-bottom:4px;">Earn unicorns by getting a perfect Exam score! Each one is unique ✨</p>
+      <div class="coll-grid" id="collGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== UNICORN DEFINITIONS =====================
+const UNI_DEFS = [
+  {name:'Rosie',     body:'#ffb6d9',mane:'#ff4da6',horn:'#ffe066',bg:'#fff0fa'},
+  {name:'Lavender',  body:'#d4b0ff',mane:'#9c27b0',horn:'#ffe066',bg:'#f5f0ff'},
+  {name:'Bluebell',  body:'#a8d8ff',mane:'#1976d2',horn:'#ff6eb4',bg:'#f0f8ff'},
+  {name:'Goldie',    body:'#ffe4a0',mane:'#e67e22',horn:'#b96fff',bg:'#fffbf0'},
+  {name:'Minty',     body:'#a0ffe4',mane:'#10b981',horn:'#ff6eb4',bg:'#f0fff9'},
+  {name:'Coral',     body:'#ffb09a',mane:'#e53935',horn:'#ffe066',bg:'#fff5f0'},
+  {name:'Iris',      body:'#c8a0ff',mane:'#7c3aed',horn:'#ffb347',bg:'#f8f0ff'},
+  {name:'Starlight', body:'#ffe0f0',mane:'#e91e8c',horn:'#6ec6ff',bg:'#fff0f8'},
+  {name:'Moonbeam',  body:'#e0e8ff',mane:'#3f51b5',horn:'#ffe066',bg:'#f0f4ff'},
+  {name:'Sunflower', body:'#fff0a0',mane:'#f9a825',horn:'#ff6eb4',bg:'#fffef0'},
+  {name:'Dewdrop',   body:'#c0f0e0',mane:'#00897b',horn:'#b96fff',bg:'#f0fff8'},
+  {name:'Aurora',    body:'#ffd0e8',mane:'#c2185b',horn:'#6ec6ff',bg:'#fff0f8'},
+];
+
+const K1_DATA = [
+  {name:'-ee', words:['see','tee','pee','fee','bee']},
+  {name:'-ay', words:['say','pay','may','day','way','play','stay','sway','bray','clay']},
+  {name:'-ob', words:['sob','rob','mob','cob','job','snob','blob','knob']},
+  {name:'-en', words:['ten','pen','men','den','hen']},
+];
+
+// ===================== STATE =====================
+function ls(k,d){ try{return JSON.parse(localStorage.getItem(k))||d;}catch{return d;} }
+function lss(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch{} }
+
+let families  = ls('hg_fams',[]);
+let stamps    = ls('hg_stamps',[]);        // array of timestamps
+let collected = ls('hg_collected',[]);     // array of UNI_DEFS indices
+let newUnis   = ls('hg_newuni',[]);
+let redeemed  = ls('hg_redeemed',0);
+
+function save(){
+  lss('hg_fams',families); lss('hg_stamps',stamps);
+  lss('hg_collected',collected); lss('hg_newuni',newUnis);
+  lss('hg_redeemed',redeemed);
+}
+
+// ===================== VOICE =====================
+let femVoice = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  if(!vs.length) return;
+  const names=['Samantha','Karen','Victoria','Moira','Tessa','Fiona','Veena',
+                'Zira','Susan','Hazel','Allison','Ava','Kate','Serena',
+                'Google UK English Female','Microsoft Zira','Microsoft Susan',
+                'Helena','Google US English'];
+  for(const n of names){ const v=vs.find(x=>x.name.includes(n)); if(v){femVoice=v;return;} }
+  femVoice = vs.find(v=>v.lang==='en-GB'||v.lang==='en-AU')
+           || vs.find(v=>v.lang.startsWith('en')) || vs[0];
+}
+speechSynthesis.addEventListener('voiceschanged', pickVoice);
+// Also try immediately and after a short delay (Firefox needs this)
+pickVoice();
+setTimeout(pickVoice, 500);
+setTimeout(pickVoice, 1500);
+
+function speak(word){
+  if(!femVoice) pickVoice();
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate=0.55; u.pitch=1.35; u.lang='en-UK';
+  if(femVoice) u.voice=femVoice;
+  // Workaround: some browsers lose voice — re-assign just before speak
+  setTimeout(()=>{
+    if(femVoice) u.voice=femVoice;
+    speechSynthesis.speak(u);
+  },10);
+}
+
+// ===================== SPARKLES =====================
+(()=>{
+  const em=['✨','⭐','🌟','💫','🌸','💎'];
+  for(let i=0;i<14;i++){
+    const s=document.createElement('div'); s.className='sparkle';
+    s.textContent=em[i%em.length];
+    s.style.cssText=`left:${Math.random()*100}vw;font-size:${0.65+Math.random()*0.85}rem;animation-duration:${7+Math.random()*12}s;animation-delay:${Math.random()*10}s;`;
+    document.body.appendChild(s);
+  }
+})();
+
+// ===================== TABS =====================
+function goTab(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${t}"]`).classList.add('active');
+  if(t==='learn')   renderLearn();
+  if(t==='test')    renderTestPick();
+  if(t==='exam')    renderExamStart();
+  if(t==='rewards') renderRewards();
+}
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
+
+// ===================== PARENT =====================
+function loadK1(){
+  if(families.length && !confirm('Add K1 Term 3 families? Existing families will be kept.')) return;
+  K1_DATA.forEach(kf=>{ if(!families.find(f=>f.name===kf.name)) families.push({name:kf.name,words:[...kf.words]}); });
+  save(); renderFamilies();
+}
+
+function addFamily(){
+  const inp=document.getElementById('newFamIn');
+  const n=inp.value.trim(); if(!n) return;
+  if(families.find(f=>f.name===n)){inp.value='';return;}
+  families.push({name:n,words:[]}); inp.value=''; save(); renderFamilies();
+}
+document.getElementById('newFamIn').addEventListener('keydown',e=>{if(e.key==='Enter')addFamily();});
+
+function delFamily(i){
+  if(!confirm(`Remove "${families[i].name}" family?`)) return;
+  families.splice(i,1); save(); renderFamilies();
+}
+function addWord(fi){
+  const inp=document.getElementById('wi'+fi);
+  const w=inp.value.trim().toLowerCase(); if(!w||families[fi].words.includes(w)){inp.value='';return;}
+  families[fi].words.push(w); inp.value=''; save(); renderFamilies();
+  setTimeout(()=>document.getElementById('wi'+fi)?.focus(),60);
+}
+function delWord(fi,wi){ families[fi].words.splice(wi,1); save(); renderFamilies(); }
+
+const CHCLS=['ch0','ch1','ch2','ch3','ch4'];
+const BCLS=['b0','b1','b2','b3','b4'];
+
+function renderFamilies(){
+  const el=document.getElementById('familyList');
+  if(!families.length){
+    el.innerHTML='<div class="no-msg"><span>📋</span>No word families yet.<br>Click "Load K1 Term 3 Word List" below!</div>'; return;
+  }
+  el.innerHTML=families.map((f,fi)=>`
+    <div class="fam-block">
+      <div class="fam-header">
+        <span class="fam-badge">${f.name}</span>
+        <span style="font-size:0.78rem;color:#bbb;">${f.words.length} word${f.words.length!==1?'s':''}</span>
+        <button class="btn btn-red" style="padding:4px 10px;font-size:0.78rem;margin-left:auto;" onclick="delFamily(${fi})">🗑 Remove</button>
+      </div>
+      <div class="chips-row">
+        ${f.words.map((w,wi)=>`<span class="wchip ${CHCLS[fi%5]}">${w}<button class="rm" onclick="delWord(${fi},${wi})">✕</button></span>`).join('')}
+        ${!f.words.length?'<span style="color:#ddd;font-size:0.82rem;">No words yet</span>':''}
+      </div>
+      <div class="add-row">
+        <input type="text" id="wi${fi}" class="txt-in" placeholder="Add word…" maxlength="20" style="flex:1;min-width:90px;"
+          onkeydown="if(event.key==='Enter')addWord(${fi})" />
+        <button class="btn btn-pink" onclick="addWord(${fi})" style="padding:7px 13px;">+ Add</button>
+      </div>
+    </div>`).join('');
+}
+
+// ===================== LEARN =====================
+function renderLearn(){
+  const el=document.getElementById('learnContent');
+  if(!families.length||families.every(f=>!f.words.length)){
+    el.innerHTML='<div class="no-msg"><span>🦄</span>No words yet!<br>Add words in the Parent tab.</div>'; return;
+  }
+  el.innerHTML=families.filter(f=>f.words.length).map((f,fi)=>`
+    <div class="fam-section">
+      <span class="fam-label">${f.name} words</span>
+      <div class="learn-grid">
+        ${f.words.map(w=>{
+          const letters=w.split('').map((c,j)=>`<span class="p${j%7}">${c}</span>`).join('');
+          return `<div class="learn-card ${BCLS[fi%5]}" onclick="sayWord('${w}',this)">
+            <span class="learn-word">${letters}</span>
+            <span class="learn-icon">🔊</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function sayWord(w,el){
+  speak(w);
+  if(el){el.classList.add('speaking');setTimeout(()=>el.classList.remove('speaking'),500);}
+}
+
+// ===================== TEST STATE =====================
+let tQ=[],tIdx=0,tScore=0,tHints=0,tHintLv=0,tAttempts=0,tIsExam=false;
+
+// ===================== TEST PICK =====================
+function renderTestPick(){
+  const el=document.getElementById('testInner');
+  const ok=families.some(f=>f.words.length>0);
+  if(!ok){el.innerHTML='<div class="no-msg"><span>🦄</span>No words yet!</div>';return;}
+  el.innerHTML=`
+    <div class="test-area">
+      <div class="card-title" style="justify-content:center;font-size:1.3rem;">📖 Choose a Word Family!</div>
+      <p style="color:#aaa;font-size:0.85rem;margin-bottom:12px;">Pick a family to practise, or mix them all!</p>
+      <div class="fam-select-grid">
+        ${families.filter(f=>f.words.length).map((f,fi)=>`
+          <div class="fam-sel ${BCLS[fi%5]}" onclick="startFamTest(${families.indexOf(f)})">
+            <div class="fam-sel-name">${f.name}</div>
+            <div class="fam-sel-ct">${f.words.length} words</div>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-purple" onclick="startFamTest(-1)">🌈 Mix All Families!</button>
+    </div>`;
+}
+
+function startFamTest(fi){
+  tIsExam=false;
+  const pool = fi===-1
+    ? families.flatMap(f=>f.words.map(w=>({w,fam:f.name})))
+    : families[fi].words.map(w=>({w,fam:families[fi].name}));
+  tQ=pool.sort(()=>Math.random()-0.5);
+  tIdx=0;tScore=0;
+  renderQ('testInner');
+}
+
+// ===================== EXAM =====================
+function renderExamStart(){
+  const el=document.getElementById('examInner');
+  const all=families.flatMap(f=>f.words);
+  if(!all.length){el.innerHTML='<div class="no-msg"><span>🦄</span>No words yet!</div>';return;}
+  el.innerHTML=`
+    <div class="test-area">
+      <span class="test-uni">🦄</span>
+      <div class="card-title" style="justify-content:center;font-size:1.3rem;">🎓 Big Spelling Exam!</div>
+      <p style="color:#aaa;font-size:0.88rem;margin-bottom:16px;">10 random words from all families — shuffled! Get 100% for a stamp &amp; a new Unicorn! ✨</p>
+      <button class="btn btn-blue" style="font-size:1.05rem;padding:13px 28px;" onclick="startExam()">🌟 Start Exam!</button>
+    </div>`;
+}
+
+function startExam(){
+  tIsExam=true;
+  const all=families.flatMap(f=>f.words.map(w=>({w,fam:f.name}))).sort(()=>Math.random()-0.5);
+  tQ=all.slice(0,10);
+  tIdx=0;tScore=0;
+  renderQ('examInner');
+}
+
+// ===================== QUESTION =====================
+function renderQ(cid){
+  if(tIdx>=tQ.length){showDone(cid);return;}
+  tHints=0;tHintLv=0;tAttempts=0;
+  const {w,fam}=tQ[tIdx];
+  const pct=tIdx/tQ.length*100;
+  document.getElementById(cid).innerHTML=`
+    <div class="test-area">
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+      <div class="score-pill">🌟 ${tScore}/${tQ.length} &nbsp;·&nbsp; ${tIdx+1}/${tQ.length}</div><br>
+      <span class="fam-tag">${fam} family</span>
+      <p class="test-prompt">🦄 Listen and spell the word:</p>
+      <span class="test-uni">🦄</span>
+      <div class="hint-row" id="hr">
+        ${w.split('').map((_,i)=>`<div class="hbox hc${i%7}" id="hb${i}" style="opacity:0.16;">?</div>`).join('')}
+      </div>
+      <div class="test-btns">
+        <button class="btn btn-blue" onclick="speak('${w}')">🔊 Hear Word</button>
+        <button class="btn btn-yellow" onclick="doHint('${w}')">💡 Hint</button>
+      </div>
+      <div class="test-input-wrap">
+        <input type="text" id="tIn" class="test-input" placeholder="type here…" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="25" />
+        <button class="btn btn-pink" onclick="checkAns('${w}','${cid}')">✓ Check!</button>
+      </div>
+      <div class="fb" id="fb"></div>
+      <div id="nxt"></div>
+    </div>`;
+  setTimeout(()=>speak(w),380);
+  document.getElementById('tIn').addEventListener('keydown',e=>{if(e.key==='Enter')checkAns(w,cid);});
+  document.getElementById('tIn').focus();
+}
+
+function doHint(w){
+  tHintLv=Math.min(tHintLv+1,w.length); tHints++;
+  w.split('').forEach((c,i)=>{
+    const e=document.getElementById('hb'+i);
+    if(e&&i<tHintLv){e.style.opacity='1';e.textContent=c;}
+  });
+}
+
+function checkAns(w,cid){
+  const inp=document.getElementById('tIn');
+  const ans=inp.value.trim().toLowerCase();
+  if(!ans){inp.focus();return;}
+  tAttempts++;
+  const fb=document.getElementById('fb');
+  if(ans===w){
+    inp.classList.add('ok');
+    if(tHints===0) tScore++;
+    const ok=['🎉 Amazing!','✨ Brilliant!','🌟 Super!','💫 Fantastic!','🦄 Magic!','🌈 Wow!','⭐ Perfect!'];
+    fb.textContent=tHints>0?ok[tIdx%ok.length]+' (with hint 💡)':ok[tIdx%ok.length];
+    fb.className='fb ok';
+    w.split('').forEach((c,i)=>{const e=document.getElementById('hb'+i);if(e){e.style.opacity='1';e.textContent=c;}});
+    confetti(22);
+    document.getElementById('nxt').innerHTML=`<button class="btn btn-green" style="margin-top:10px;" onclick="nextQ('${cid}')">Next ➡️</button>`;
+    inp.disabled=true;
+  } else {
+    inp.classList.add('err');
+    setTimeout(()=>{inp.classList.remove('err');inp.value='';inp.focus();},420);
+    const bad=['Try again! 💪','Almost! 🌸','Keep going! 🌈','You can do it! ✨'];
+    fb.textContent=bad[tAttempts%bad.length]; fb.className='fb err';
+    if(tAttempts>=2) doHint(w);
+  }
+}
+
+function nextQ(cid){tIdx++;renderQ(cid);}
+
+// ===================== COMPLETION =====================
+function showDone(cid){
+  const tot=tQ.length;
+  const pct=Math.round(tScore/tot*100);
+  const perfect=pct===100;
+  let medal,praise;
+  if(perfect){medal='🏆';praise='Perfect Score! You\'re a Spelling Superstar!';}
+  else if(pct>=80){medal='🥇';praise='Brilliant! Almost perfect!';}
+  else if(pct>=60){medal='🥈';praise='Great effort! Keep practising!';}
+  else{medal='🥉';praise='Good try! Let\'s practise more!';}
+
+  let stampHtml='', uniHtml='', newUni=null;
+
+  if(perfect && tIsExam){
+    stamps.push(Date.now());
+    // Give a unicorn
+    const nextIdx=collected.length;
+    if(nextIdx < UNI_DEFS.length){
+      collected.push(nextIdx); newUnis.push(nextIdx); newUni=UNI_DEFS[nextIdx];
+    }
+    save();
+    const sc=stamps.length%8||8;
+    stampHtml=`<div style="margin:10px 0;padding:11px;background:linear-gradient(135deg,#fff0fa,#ffe4f5);border-radius:13px;border:2px solid var(--pink3);">
+      <p style="font-family:'Bubblegum Sans',cursive;color:var(--pink2);">🌟 Stamp earned! ${sc}/8 on your card!</p>
+      ${sc===8?'<p style="font-weight:800;color:var(--pink2);">🎁 Card full! Go to 🏆 Rewards to redeem!</p>':''}
+    </div>`;
+  } else if(perfect && !tIsExam){
+    stampHtml=`<p style="color:var(--purple);font-size:0.85rem;margin:8px 0;">✨ Great job! Try the 🎓 Exam for a stamp &amp; unicorn!</p>`;
+  }
+
+  if(newUni){
+    uniHtml=`<div style="margin:10px 0;padding:13px;background:linear-gradient(135deg,#fff0fa,#f0e8ff);border-radius:15px;border:2px solid var(--purple);">
+      <p style="font-family:'Bubblegum Sans',cursive;color:var(--purple);">🦄 New Unicorn Unlocked!</p>
+      <canvas id="rewC" width="88" height="88" style="margin:8px auto;display:block;border-radius:50%;"></canvas>
+      <p style="font-family:'Bubblegum Sans',cursive;color:var(--pink2);font-size:1.05rem;">${newUni.name}</p>
+      <p style="font-size:0.76rem;color:#aaa;">Go to 🏆 Rewards to see your collection!</p>
+    </div>`;
+  }
+
+  document.getElementById(cid).innerHTML=`
+    <div class="compl">
+      <span class="big-uni">🦄</span>
+      <h2>You Did It! ${medal}</h2>
+      <p style="color:#aaa;font-size:0.88rem;margin-bottom:9px;">${praise}</p>
+      <div class="score-pill" style="font-size:1.05rem;padding:9px 22px;">✨ ${tScore}/${tot} correct (${pct}%)</div>
+      ${stampHtml}${uniHtml}
+      <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
+        ${tIsExam
+          ?`<button class="btn btn-pink" onclick="startExam()">🔄 Try Again</button>
+            <button class="btn btn-green" onclick="goTab('rewards')">🏆 See Rewards</button>`
+          :`<button class="btn btn-pink" onclick="renderTestPick()">📖 Pick Family</button>
+            <button class="btn btn-purple" onclick="goTab('exam')">🎓 Try the Exam!</button>`}
+      </div>
+    </div>`;
+
+  confetti(perfect?72:32);
+  if(newUni) setTimeout(()=>{const c=document.getElementById('rewC');if(c)drawUni(c,newUni,false);},120);
+}
+
+// ===================== REWARDS =====================
+function renderRewards(){ renderStamps(); renderCollection(); }
+
+function renderStamps(){
+  const TOTAL=8;
+  const used=stamps.length - redeemed*TOTAL;
+  const filled=Math.min(used,TOTAL);
+
+  document.getElementById('stampsGrid').innerHTML=
+    Array.from({length:TOTAL},(_,i)=>`
+      <div class="stamp-slot ${i<filled?'filled':''}">
+        ${i<filled?'🌟':''}
+        <span class="stamp-num">${i+1}</span>
+      </div>`).join('');
+
+  const wrap=document.getElementById('redeemWrap');
+  if(filled>=TOTAL){
+    wrap.innerHTML=`<button class="btn btn-pink" style="font-size:1.05rem;padding:13px 26px;margin-top:6px;" onclick="doRedeem()">🎁 Redeem My Reward!</button>`;
+  } else {
+    wrap.innerHTML=`<p style="text-align:center;color:#ccc;font-size:0.82rem;margin-top:5px;">${TOTAL-filled} more perfect exam${TOTAL-filled!==1?'s':''} to go! 💪</p>
+    ${redeemed>0?`<p style="text-align:center;color:var(--purple);font-size:0.82rem;font-weight:700;margin-top:4px;">🎉 Rewards redeemed so far: ${redeemed}</p>`:''}`;
+  }
+}
+
+function doRedeem(){
+  redeemed++; save();
+  document.getElementById('stampsGrid').innerHTML=`
+    <div style="grid-column:1/-1;text-align:center;padding:18px;">
+      <span style="font-size:3rem;">🎁</span>
+      <p style="font-family:'Bubblegum Sans',cursive;color:var(--pink2);font-size:1.1rem;margin-top:8px;">
+        Reward redeemed! Ask Mummy or Daddy for your prize! 🎉</p>
+    </div>`;
+  document.getElementById('redeemWrap').innerHTML='';
+  confetti(90);
+  setTimeout(()=>renderStamps(),3200);
+}
+
+function renderCollection(){
+  const grid=document.getElementById('collGrid');
+  grid.innerHTML=UNI_DEFS.map((u,i)=>{
+    const own=collected.includes(i), isNew=newUnis.includes(i)&&own;
+    return `<div class="uni-slot ${own?'owned':'locked'} ${isNew?'new-uni':''}" id="us${i}">
+      ${isNew?'<span class="new-bdg">NEW!</span>':''}
+      <canvas class="uni-canvas" id="uc${i}" width="78" height="78"></canvas>
+      <div class="uni-name">${own?u.name:'???'}</div>
+      ${!own?`<div class="uni-hint">Perfect exam!</div>`:''}
+    </div>`;
+  }).join('');
+  UNI_DEFS.forEach((u,i)=>{
+    const c=document.getElementById('uc'+i);
+    if(c) drawUni(c,u,!collected.includes(i));
+  });
+  setTimeout(()=>{newUnis=[];save();},1800);
+}
+
+// ===================== DRAW UNICORN =====================
+function drawUni(canvas, def, locked){
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background circle
+  ctx.save();
+  ctx.beginPath(); ctx.arc(W/2,H/2,W/2-1,0,Math.PI*2);
+  ctx.fillStyle=locked?'#f0f0f0':def.bg; ctx.fill();
+  if(!locked){ctx.strokeStyle=def.mane+'33';ctx.lineWidth=1.5;ctx.stroke();}
+  ctx.clip();
+
+  if(locked){
+    // grey silhouette
+    ctx.globalAlpha=0.35;
+    drawBody(ctx,W,H,'#ccc','#bbb','#ddd');
+    ctx.globalAlpha=1;
+    ctx.font='bold 20px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#aaa'; ctx.fillText('🔒',W/2,H/2+4);
+  } else {
+    drawBody(ctx,W,H,def.body,def.mane,def.horn);
+  }
+  ctx.restore();
+}
+
+function drawBody(ctx,W,H,body,mane,horn){
+  const cx=W/2, cy=H/2+5;
+
+  // Body
+  ctx.beginPath(); ctx.ellipse(cx+2,cy+8,21,14,-0.18,0,Math.PI*2);
+  ctx.fillStyle=body; ctx.fill();
+  ctx.strokeStyle=mane+'55';ctx.lineWidth=1.2;ctx.stroke();
+
+  // Neck
+  ctx.beginPath(); ctx.ellipse(cx-5,cy-3,8,12,-0.28,0,Math.PI*2);
+  ctx.fillStyle=body; ctx.fill();
+  ctx.strokeStyle=mane+'55';ctx.lineWidth=1.2;ctx.stroke();
+
+  // Head
+  ctx.beginPath(); ctx.ellipse(cx-11,cy-15,10,8,-0.18,0,Math.PI*2);
+  ctx.fillStyle=body; ctx.fill();
+  ctx.strokeStyle=mane+'55';ctx.lineWidth=1.2;ctx.stroke();
+
+  // Horn
+  ctx.beginPath();
+  ctx.moveTo(cx-17,cy-22); ctx.lineTo(cx-9,cy-36); ctx.lineTo(cx-4,cy-22);
+  ctx.closePath(); ctx.fillStyle=horn; ctx.fill();
+  ctx.strokeStyle=horn+'88';ctx.lineWidth=0.8;ctx.stroke();
+  // shine
+  ctx.beginPath();ctx.moveTo(cx-15,cy-23);ctx.lineTo(cx-10,cy-33);
+  ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.2;ctx.lineCap='round';ctx.stroke();
+
+  // Mane strands
+  [[cx-7,cy-25,cx+5,cy-28,cx+9,cy-18,cx+5,cy-6],
+   [cx-5,cy-25,cx+9,cy-26,cx+13,cy-14,cx+8,cy-2]].forEach(([x0,y0,x1,y1,x2,y2,x3,y3],si)=>{
+    ctx.beginPath(); ctx.moveTo(x0,y0);
+    ctx.bezierCurveTo(x1,y1,x2,y2,x3,y3);
+    ctx.strokeStyle=mane+(si?'aa':''); ctx.lineWidth=si?2:3.5; ctx.lineCap='round'; ctx.stroke();
+  });
+
+  // Tail
+  ctx.beginPath();ctx.moveTo(cx+21,cy+4);
+  ctx.bezierCurveTo(cx+32,cy-1,cx+35,cy+14,cx+25,cy+17);
+  ctx.bezierCurveTo(cx+34,cy+17,cx+30,cy+26,cx+22,cy+22);
+  ctx.strokeStyle=mane;ctx.lineWidth=3.2;ctx.lineCap='round';ctx.stroke();
+
+  // Legs
+  [[cx+3,cy+22,cx+1,cy+37],[cx+11,cy+22,cx+11,cy+37],
+   [cx-4,cy+22,cx-6,cy+37],[cx+20,cy+22,cx+19,cy+37]].forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+    ctx.strokeStyle=body;ctx.lineWidth=4.5;ctx.lineCap='round';ctx.stroke();
+    ctx.strokeStyle=mane+'44';ctx.lineWidth=1;ctx.stroke();
+  });
+
+  // Eye
+  ctx.beginPath();ctx.arc(cx-16,cy-16,2.3,0,Math.PI*2);ctx.fillStyle='#333';ctx.fill();
+  ctx.beginPath();ctx.arc(cx-15,cy-17,0.9,0,Math.PI*2);ctx.fillStyle='white';ctx.fill();
+
+  // Nostril
+  ctx.beginPath();ctx.arc(cx-20,cy-12,1.1,0,Math.PI*2);ctx.fillStyle=mane+'88';ctx.fill();
+
+  // Stars on body
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=horn+'cc';ctx.font='7px sans-serif';
+  [[cx+9,cy+8],[cx+16,cy+2]].forEach(([sx,sy])=>ctx.fillText('★',sx,sy));
+}
+
+// ===================== CONFETTI =====================
+const CCOLS=['#ff6eb4','#b96fff','#6ec6ff','#ffe066','#ff4da6','#6fffd4','#ffb347'];
+function confetti(n=24){
+  for(let i=0;i<n;i++){
+    const e=document.createElement('div'); e.className='cfp';
+    e.style.left=(10+Math.random()*80)+'vw';
+    e.style.background=CCOLS[Math.floor(Math.random()*CCOLS.length)];
+    e.style.animationDuration=(1.8+Math.random()*2.2)+'s';
+    e.style.animationDelay=(Math.random()*0.65)+'s';
+    const sz=(6+Math.random()*8)+'px'; e.style.width=e.style.height=sz;
+    e.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    document.body.appendChild(e);
+    setTimeout(()=>e.remove(),4200);
+  }
+}
+
+// ===================== INIT =====================
+renderFamilies();
+</script>
+</body>
+</html>

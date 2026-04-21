@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tens & Ones Adventure! 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #87CEEB;
+    --sun: #FFD700;
+    --grass: #7BC67E;
+    --tens-color: #FF6B6B;
+    --ones-color: #4ECDC4;
+    --tens-dark: #e04040;
+    --ones-dark: #2aada4;
+    --bg: #FFF9F0;
+    --cloud: #fff;
+    --text: #3A3A5C;
+    --gold: #FFB300;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--text);
+  }
+
+  /* SKY HEADER */
+  .sky-header {
+    background: linear-gradient(180deg, #5BB8F5 0%, #87CEEB 60%, #B5E0FA 100%);
+    padding: 18px 20px 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .sun {
+    position: absolute;
+    top: 12px; right: 60px;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle, #FFE566, #FFB300);
+    border-radius: 50%;
+    box-shadow: 0 0 30px 10px rgba(255,200,0,0.4);
+    animation: sunPulse 3s ease-in-out infinite;
+  }
+  @keyframes sunPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+  .cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.9;
+  }
+  .cloud::before, .cloud::after {
+    content:''; position:absolute; background:white; border-radius:50%;
+  }
+  .cloud1 { width:80px; height:28px; top:18px; left:40px; }
+  .cloud1::before { width:40px; height:40px; top:-18px; left:10px; }
+  .cloud1::after { width:28px; height:28px; top:-12px; left:35px; }
+  .cloud2 { width:60px; height:22px; top:10px; right:150px; }
+  .cloud2::before { width:30px; height:30px; top:-14px; left:8px; }
+  .cloud2::after { width:22px; height:22px; top:-10px; left:28px; }
+
+  .title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: white;
+    text-shadow: 3px 3px 0 #3A7BD5, 0 0 20px rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 1;
+  }
+  .subtitle {
+    color: rgba(255,255,255,0.95);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 4px;
+    position: relative; z-index: 1;
+  }
+
+  /* SCORE BAR */
+  .score-bar {
+    background: linear-gradient(90deg, #FF6B6B, #FF8E53);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 10px 20px;
+    flex-wrap: wrap;
+  }
+  .score-item {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.25);
+    padding: 6px 16px; border-radius: 30px;
+  }
+  .score-emoji { font-size: 1.3rem; }
+  .score-label { color: white; font-weight: 800; font-size: 0.95rem; }
+  .score-val { color: white; font-family: 'Fredoka One'; font-size: 1.3rem; }
+
+  /* MAIN LAYOUT */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* NUMBER DISPLAY */
+  .number-display {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .big-number {
+    font-family: 'Fredoka One', cursive;
+    font-size: 5rem;
+    line-height: 1;
+    background: linear-gradient(135deg, #FF6B6B, #FFB300);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.1));
+    animation: pop 0.4s cubic-bezier(.36,.07,.19,.97);
+  }
+  .big-number.hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .reveal-btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    padding: 7px 20px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #9B59B6, #6C3483);
+    color: white;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 3px 0 #4A235A;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: inline-block;
+  }
+  .reveal-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 #4A235A; }
+  .reveal-btn:active { transform: scale(0.95); }
+  @keyframes pop {
+    0%{transform:scale(0.5);opacity:0;}
+    80%{transform:scale(1.1);}
+    100%{transform:scale(1);opacity:1;}
+  }
+  .question-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #555;
+    margin-top: 4px;
+  }
+
+  /* BLOCKS AREA */
+  .blocks-section {
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    border: 3px solid #f0e6ff;
+  }
+  .blocks-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .block-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 140px;
+  }
+  .block-group-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    padding: 6px 20px;
+    border-radius: 30px;
+    color: white;
+    letter-spacing: 0.5px;
+  }
+  .tens-label { background: var(--tens-color); }
+  .ones-label { background: var(--ones-color); }
+
+  .block-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    min-height: 60px;
+  }
+
+  /* TEN-BLOCK (tall rod) */
+  .ten-block {
+    width: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: blockBounce 0.3s ease forwards;
+  }
+  @keyframes blockBounce {
+    0%{transform:scale(0) rotate(-10deg);opacity:0;}
+    70%{transform:scale(1.15) rotate(2deg);}
+    100%{transform:scale(1) rotate(0);opacity:1;}
+  }
+  .ten-block .unit {
+    width: 32px; height: 20px;
+    background: linear-gradient(135deg, #FF8A80, var(--tens-color));
+    border-radius: 5px;
+    border: 2px solid var(--tens-dark);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 2px 2px 0 rgba(0,0,0,0.1);
+  }
+  .ten-block-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .ten-block-count {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--tens-dark);
+  }
+
+  /* ONE-BLOCK (single cube) */
+  .one-block {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #80EDE8, var(--ones-color));
+    border-radius: 8px;
+    border: 2px solid var(--ones-dark);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 2px 2px 0 rgba(0,0,0,0.1);
+    animation: blockBounce 0.3s ease forwards;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 800; color: var(--ones-dark);
+  }
+
+  .divider {
+    width: 3px;
+    background: linear-gradient(180deg, #e0d0ff, #c0b0ee);
+    border-radius: 10px;
+    align-self: stretch;
+    min-height: 80px;
+  }
+
+  /* INPUT SECTION */
+  .input-section {
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.08);
+    border: 3px solid #f0e6ff;
+    margin-bottom: 20px;
+  }
+  .input-section h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .input-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .input-box label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    padding: 5px 16px;
+    border-radius: 20px;
+    color: white;
+  }
+  .tens-input-label { background: var(--tens-color); }
+  .ones-input-label { background: var(--ones-color); }
+
+  .number-input {
+    width: 80px; height: 70px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.5rem;
+    text-align: center;
+    border-radius: 16px;
+    border: 4px solid #ddd;
+    background: #fafafa;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  .number-input:focus { border-color: #9B59B6; transform: scale(1.05); }
+  .tens-input:focus { border-color: var(--tens-color); }
+  .ones-input:focus { border-color: var(--ones-color); }
+
+  .plus-sign {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: #aaa;
+    align-self: flex-end;
+    padding-bottom: 12px;
+  }
+
+  /* BUTTONS */
+  .btn-row {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px;
+  }
+  .btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn:active { transform: scale(0.95) !important; }
+  .btn-check {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: white;
+    box-shadow: 0 4px 0 #1B5E20;
+  }
+  .btn-check:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #1B5E20; }
+  .btn-next {
+    background: linear-gradient(135deg, #FF6B6B, #E53935);
+    color: white;
+    box-shadow: 0 4px 0 #B71C1C;
+  }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #B71C1C; }
+  .btn-show {
+    background: linear-gradient(135deg, #FFB300, #F57F17);
+    color: white;
+    box-shadow: 0 4px 0 #E65100;
+  }
+  .btn-show:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #E65100; }
+
+  /* FEEDBACK */
+  .feedback {
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    padding: 14px;
+    border-radius: 20px;
+    margin-top: 12px;
+    display: none;
+    animation: feedbackPop 0.4s cubic-bezier(.36,.07,.19,.97);
+  }
+  @keyframes feedbackPop { 0%{transform:scale(0.7);opacity:0;} 80%{transform:scale(1.05);} 100%{transform:scale(1);opacity:1;} }
+  .feedback.correct { background: #E8F5E9; color: #2E7D32; border: 3px solid #4CAF50; }
+  .feedback.wrong   { background: #FFF3E0; color: #E65100; border: 3px solid #FFB300; }
+
+  /* CONFETTI */
+  .confetti-container {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 999;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 12px; height: 12px;
+    top: -20px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%{transform:translateY(0) rotate(0);opacity:1;}
+    100%{transform:translateY(110vh) rotate(720deg);opacity:0;}
+  }
+
+  /* SPARKLES */
+  .sparkle-container {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 998; overflow: hidden;
+  }
+  .sparkle {
+    position: absolute;
+    pointer-events: none;
+    animation: sparklePop ease-out forwards;
+  }
+  .sparkle::before {
+    content: '✦';
+    font-size: inherit;
+    color: inherit;
+    display: block;
+    animation: sparkleSpin linear infinite;
+  }
+  @keyframes sparklePop {
+    0%   { transform: scale(0) translateY(0);   opacity: 1; }
+    60%  { transform: scale(1.3) translateY(-40px); opacity: 1; }
+    100% { transform: scale(0.4) translateY(-80px); opacity: 0; }
+  }
+  @keyframes sparkleSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .star-burst {
+    position: absolute;
+    pointer-events: none;
+    font-size: 1.6rem;
+    animation: starFloat ease-out forwards;
+  }
+  @keyframes starFloat {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 1; }
+    50%  { transform: scale(1.4) rotate(10deg); opacity: 1; }
+    100% { transform: scale(0.5) rotate(30deg) translateY(-60px); opacity: 0; }
+  }
+
+
+  /* MODE SELECT */
+  .mode-section {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .mode-btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    color: #888;
+    border-color: #ddd;
+  }
+  .mode-btn.active { background: var(--text); color: white; border-color: var(--text); }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    background: #eee;
+    border-radius: 30px;
+    height: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .progress-bar-fill {
+    background: linear-gradient(90deg, #4ECDC4, #FFD700);
+    height: 100%;
+    border-radius: 30px;
+    transition: width 0.5s ease;
+  }
+
+  /* CELEBRATION OVERLAY */
+  .celebration {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .celebration.show { display: flex; }
+  .celebration-box {
+    background: white;
+    border-radius: 30px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: popIn 0.5s cubic-bezier(.36,.07,.19,.97);
+  }
+  @keyframes popIn { 0%{transform:scale(0.3);opacity:0;} 80%{transform:scale(1.05);} 100%{transform:scale(1);opacity:1;} }
+  .celebration-emoji { font-size: 4rem; }
+  .celebration-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--text);
+    margin: 10px 0;
+  }
+  .celebration-msg { font-size: 1rem; color: #777; margin-bottom: 20px; }
+
+  /* TEACH MODE */
+  .teach-section {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.08);
+    border: 3px solid #f0e6ff;
+    text-align: center;
+  }
+  .teach-section h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .explanation-box {
+    background: #FFF9F0;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    font-size: 1rem;
+    line-height: 1.7;
+    border: 2px dashed #FFB300;
+  }
+  .highlight-tens { color: var(--tens-dark); font-weight: 800; }
+  .highlight-ones { color: var(--ones-dark); font-weight: 800; }
+
+  .slider-area { margin: 20px 0; }
+  .slider-area label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .number-slider {
+    width: 80%;
+    max-width: 300px;
+    height: 8px;
+    accent-color: #9B59B6;
+  }
+  .slider-number {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3.5rem;
+    background: linear-gradient(135deg, #FF6B6B, #FFB300);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="sky-header">
+  <div class="sun"></div>
+  <div class="cloud cloud1"></div>
+  <div class="cloud cloud2"></div>
+  <div class="title">🎉 Tens & Ones Adventure!</div>
+  <div class="subtitle">Learn numbers with fun blocks! 🟥🟦</div>
+</div>
+
+<div class="score-bar">
+  <div class="score-item"><span class="score-emoji">⭐</span><span class="score-label">Stars</span><span class="score-val" id="scoreVal">0</span></div>
+  <div class="score-item"><span class="score-emoji">🎯</span><span class="score-label">Question</span><span class="score-val" id="qNum">1</span><span class="score-label">/10</span></div>
+  <div class="score-item"><span class="score-emoji">🔥</span><span class="score-label">Streak</span><span class="score-val" id="streakVal">0</span></div>
+</div>
+
+<div class="main">
+
+  <div class="mode-section">
+    <button class="mode-btn active" onclick="setMode('quiz')" id="modeQuiz">🎮 Play Game</button>
+    <button class="mode-btn" onclick="setMode('explore')" id="modeExplore">🔍 Explore</button>
+  </div>
+
+  <!-- QUIZ MODE -->
+  <div id="quizMode">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:10%"></div>
+    </div>
+
+    <div class="number-display">
+      <div class="big-number hidden" id="bigNumber" onclick="revealNumber()" title="Click to peek!">35</div>
+      <button class="reveal-btn" id="revealBtn" onclick="revealNumber()">👁️ Peek at the number!</button>
+      <div class="question-text" id="questionText">Count the blocks below, then type your answer!</div>
+    </div>
+
+    <div class="blocks-section">
+      <div style="text-align:center;margin-bottom:12px;">
+        <span style="font-family:'Fredoka One';font-size:1rem;color:#999;">
+          🟥 Each big red rod = <b>10</b> &nbsp;|&nbsp; 🟦 Each small blue cube = <b>1</b>
+        </span>
+      </div>
+      <div class="blocks-row" id="blocksRow">
+        <div class="block-group">
+          <div class="block-group-label tens-label">🟥 TENS</div>
+          <div class="block-grid" id="tensBlocks"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="block-group">
+          <div class="block-group-label ones-label">🟦 ONES</div>
+          <div class="block-grid" id="onesBlocks"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <h3>✏️ Now YOU fill in the blanks!</h3>
+      <div class="input-row">
+        <div class="input-box">
+          <label class="input-box label tens-input-label">TENS 🟥</label>
+          <input class="number-input tens-input" id="tensInput" type="number" min="0" max="9" placeholder="?" />
+        </div>
+        <div class="plus-sign">+</div>
+        <div class="input-box">
+          <label class="input-box label ones-input-label">ONES 🟦</label>
+          <input class="number-input ones-input" id="onesInput" type="number" min="0" max="9" placeholder="?" />
+        </div>
+        <div class="plus-sign">= <span id="eqNum" style="color:#9B59B6;font-family:'Fredoka One';font-size:2rem;">?</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-show" onclick="showHint()">💡 Show Hint</button>
+        <button class="btn btn-check" onclick="checkAnswer()">✅ Check!</button>
+        <button class="btn btn-next" onclick="nextQuestion()" id="nextBtn" style="display:none">➡️ Next!</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+
+  <!-- EXPLORE MODE -->
+  <div id="exploreMode" style="display:none">
+    <div class="teach-section">
+      <h3>🔍 Explore Any Number!</h3>
+      <div class="slider-area">
+        <label>Slide to pick a number:</label>
+        <input type="range" class="number-slider" min="1" max="99" value="35" id="exploreSlider" oninput="updateExplore(this.value)">
+        <span class="slider-number" id="exploreNum">35</span>
+      </div>
+      <div class="explanation-box" id="explainBox"></div>
+      <div class="blocks-row" id="exploreBlocks" style="background:#fafafa;border-radius:16px;padding:16px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CELEBRATION OVERLAY -->
+<div class="celebration" id="celebration">
+  <div class="celebration-box">
+    <div class="celebration-emoji">🏆</div>
+    <div class="celebration-title">You're a STAR! ⭐</div>
+    <div class="celebration-msg" id="celebMsg">Amazing job! You finished all 10 questions!</div>
+    <div style="font-size:1.2rem;font-weight:800;color:#9B59B6;margin-bottom:16px;" id="finalScore"></div>
+    <button class="btn btn-next" onclick="restartGame()">🎮 Play Again!</button>
+  </div>
+</div>
+
+<div class="confetti-container" id="confettiContainer"></div>
+<div class="sparkle-container" id="sparkleContainer"></div>
+<script>
+const COLORS = ['#FF6B6B','#4ECDC4','#FFB300','#9B59B6','#FF8C69','#43D9AD','#FF6EB4'];
+const SPARKLE_COLORS = ['#FFD700','#FF6EB4','#4ECDC4','#FF6B6B','#C39BD3','#F7DC6F','#ABEBC6'];
+
+let currentNumber = 0, score = 0, streak = 0, qCount = 0, totalQ = 10;
+let answered = false;
+
+
+// ── SPARKLES ──────────────────────────────────────────────────
+function shootSparkles(x, y, count) {
+  count = count || 14;
+  const c = document.getElementById('sparkleContainer');
+  const emojis = ['⭐','✨','🌟','💫','🎊'];
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.style.position = 'absolute';
+    s.style.pointerEvents = 'none';
+    s.style.fontSize = (1.0 + Math.random() * 1.0) + 'rem';
+    s.style.color = SPARKLE_COLORS[i % SPARKLE_COLORS.length];
+    s.textContent = '✦';
+    const angle = (i / count) * 360;
+    const dist = 50 + Math.random() * 90;
+    const dx = Math.cos(angle * Math.PI / 180) * dist;
+    const dy = Math.sin(angle * Math.PI / 180) * dist;
+    s.style.left = x + 'px';
+    s.style.top = y + 'px';
+    s.style.transition = 'none';
+    s.style.animation = 'sparklePop ' + (0.6 + Math.random()*0.5) + 's ease-out ' + (Math.random()*0.2) + 's forwards';
+    s.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    c.appendChild(s);
+  }
+  for (let i = 0; i < 7; i++) {
+    const e = document.createElement('div');
+    e.className = 'star-burst';
+    e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    const ex = x + (Math.random()-0.5) * 220;
+    const ey = y + (Math.random()-0.5) * 180;
+    e.style.left = ex + 'px'; e.style.top = ey + 'px';
+    e.style.animationDuration = (0.8+Math.random()*0.6) + 's';
+    e.style.animationDelay = (Math.random()*0.3) + 's';
+    c.appendChild(e);
+  }
+  setTimeout(function(){ c.innerHTML = ''; }, 2500);
+}
+
+function sparkleFromElement(el) {
+  const r = el.getBoundingClientRect();
+  shootSparkles(r.left + r.width/2, r.top + r.height/2, 18);
+}
+
+function revealNumber() {
+  document.getElementById('bigNumber').classList.remove('hidden');
+  document.getElementById('revealBtn').style.display = 'none';
+}
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateNumber() {
+  // Mix of easy (10-50) and medium (51-99)
+  if (qCount < 4) return rand(1,4) * 10 + rand(0,9); // round tens first
+  return rand(1,9) * 10 + rand(0,9);
+}
+
+function makeTenBlock(delay, num) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ten-block-wrapper';
+  const block = document.createElement('div');
+  block.className = 'ten-block';
+  block.style.animationDelay = delay + 'ms';
+  for (let i = 0; i < 10; i++) {
+    const u = document.createElement('div');
+    u.className = 'unit';
+    block.appendChild(u);
+  }
+  wrapper.appendChild(block);
+  return wrapper;
+}
+
+function makeOneBlock(delay) {
+  const b = document.createElement('div');
+  b.className = 'one-block';
+  b.style.animationDelay = delay + 'ms';
+  b.textContent = '1';
+  return b;
+}
+
+function renderBlocks(num, tensEl, onesEl) {
+  tensEl.innerHTML = '';
+  onesEl.innerHTML = '';
+  const tens = Math.floor(num / 10);
+  const ones = num % 10;
+  for (let i = 0; i < tens; i++) {
+    tensEl.appendChild(makeTenBlock(i * 80, i + 1));
+  }
+  for (let i = 0; i < ones; i++) {
+    onesEl.appendChild(makeOneBlock(i * 60));
+  }
+  if (tens === 0) tensEl.innerHTML = '<span style="color:#ccc;font-size:0.9rem;font-weight:700;">none</span>';
+  if (ones === 0) onesEl.innerHTML = '<span style="color:#ccc;font-size:0.9rem;font-weight:700;">none</span>';
+}
+
+function newQuestion() {
+  if (qCount >= totalQ) { endGame(); return; }
+  qCount++;
+  answered = false;
+  currentNumber = generateNumber();
+  document.getElementById('bigNumber').textContent = currentNumber;
+  document.getElementById('bigNumber').style.animation = 'none';
+  void document.getElementById('bigNumber').offsetWidth;
+  document.getElementById('bigNumber').style.animation = 'pop 0.4s cubic-bezier(.36,.07,.19,.97)';
+  document.getElementById('tensInput').value = '';
+  document.getElementById('onesInput').value = '';
+  document.getElementById('eqNum').textContent = '?';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('bigNumber').classList.add('hidden');
+  document.getElementById('revealBtn').style.display = 'inline-block';
+  document.getElementById('qNum').textContent = qCount;
+  document.getElementById('progressFill').style.width = ((qCount / totalQ) * 100) + '%';
+
+  renderBlocks(currentNumber,
+    document.getElementById('tensBlocks'),
+    document.getElementById('onesBlocks'));
+}
+
+function checkAnswer() {
+  if (answered) return;
+  const t = parseInt(document.getElementById('tensInput').value);
+  const o = parseInt(document.getElementById('onesInput').value);
+  const correct_t = Math.floor(currentNumber / 10);
+  const correct_o = currentNumber % 10;
+  const fb = document.getElementById('feedback');
+
+  if (isNaN(t) || isNaN(o)) {
+    fb.textContent = '🤔 Please fill in both boxes!';
+    fb.className = 'feedback wrong';
+    fb.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('eqNum').textContent = currentNumber;
+
+  if (t === correct_t && o === correct_o) {
+    score++;
+    streak++;
+    document.getElementById('scoreVal').textContent = score;
+    document.getElementById('streakVal').textContent = streak;
+    answered = true;
+    let msg = streak >= 3 ? `🔥 ${streak} in a row!! Amazing!!` : '🎉 Correct! Great job!';
+    fb.textContent = msg;
+    fb.className = 'feedback correct';
+    fb.style.display = 'block';
+    shootConfetti(15);
+    sparkleFromElement(document.getElementById('bigNumber'));
+    setTimeout(function(){ sparkleFromElement(fb); }, 300);
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  } else {
+    streak = 0;
+    document.getElementById('streakVal').textContent = streak;
+    fb.innerHTML = `😊 Not quite! ${currentNumber} has <b>${correct_t} tens</b> and <b>${correct_o} ones</b>. Count the blocks! Try again!`;
+    fb.className = 'feedback wrong';
+    fb.style.display = 'block';
+  }
+}
+
+function showHint() {
+  const correct_t = Math.floor(currentNumber / 10);
+  const correct_o = currentNumber % 10;
+  const fb = document.getElementById('feedback');
+  fb.innerHTML = `💡 Hint: Count the 🟥 red rods for tens! There are <b>${correct_t}</b> of them!`;
+  fb.className = 'feedback wrong';
+  fb.style.display = 'block';
+}
+
+function nextQuestion() {
+  newQuestion();
+}
+
+function endGame() {
+  document.getElementById('finalScore').textContent = `You got ${score} out of ${totalQ} ⭐`;
+  document.getElementById('celebMsg').textContent = score >= 8 ? 'Incredible! You\'re a tens & ones champion! 🏆' :
+    score >= 5 ? 'Great effort! You\'re getting so good! 🌟' : 'Nice try! Practice makes perfect! 💪';
+  document.getElementById('celebration').classList.add('show');
+  shootConfetti(40);
+  setTimeout(function(){ shootSparkles(window.innerWidth/2, window.innerHeight/2, 24); }, 200);
+  setTimeout(function(){ shootSparkles(window.innerWidth/4, window.innerHeight/3, 16); }, 600);
+  setTimeout(function(){ shootSparkles(window.innerWidth*3/4, window.innerHeight/3, 16); }, 900);
+}
+
+function restartGame() {
+  score = 0; streak = 0; qCount = 0; answered = false;
+  document.getElementById('scoreVal').textContent = 0;
+  document.getElementById('streakVal').textContent = 0;
+  document.getElementById('celebration').classList.remove('show');
+  newQuestion();
+}
+
+function shootConfetti(count) {
+  const c = document.getElementById('confettiContainer');
+  c.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = COLORS[Math.floor(Math.random() * COLORS.length)];
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.8) + 's';
+    p.style.width = (8 + Math.random() * 10) + 'px';
+    p.style.height = (8 + Math.random() * 10) + 'px';
+    c.appendChild(p);
+  }
+  setTimeout(() => c.innerHTML = '', 4000);
+}
+
+// EXPLORE MODE
+function updateExplore(val) {
+  val = parseInt(val);
+  document.getElementById('exploreNum').textContent = val;
+  const tens = Math.floor(val / 10);
+  const ones = val % 10;
+  document.getElementById('explainBox').innerHTML =
+    `The number <b>${val}</b> has <span class="highlight-tens">${tens} ten${tens!==1?'s':''}</span> (= ${tens*10}) 
+    and <span class="highlight-ones">${ones} one${ones!==1?'s':''}</span> (= ${ones}).
+    <br>So ${tens} × 10 + ${ones} × 1 = <b>${val}</b>! 🎉`;
+
+  const eb = document.getElementById('exploreBlocks');
+  eb.innerHTML = `
+    <div class="block-group">
+      <div class="block-group-label tens-label">🟥 TENS (${tens})</div>
+      <div class="block-grid" id="expTens"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="block-group">
+      <div class="block-group-label ones-label">🟦 ONES (${ones})</div>
+      <div class="block-grid" id="expOnes"></div>
+    </div>`;
+  renderBlocks(val, document.getElementById('expTens'), document.getElementById('expOnes'));
+}
+
+function setMode(mode) {
+  document.getElementById('quizMode').style.display = mode === 'quiz' ? '' : 'none';
+  document.getElementById('exploreMode').style.display = mode === 'explore' ? '' : 'none';
+  document.getElementById('modeQuiz').className = 'mode-btn' + (mode==='quiz'?' active':'');
+  document.getElementById('modeExplore').className = 'mode-btn' + (mode==='explore'?' active':'');
+  if (mode === 'explore') updateExplore(35);
+}
+
+// Keyboard enter to check
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (!answered) checkAnswer();
+    else if (document.getElementById('nextBtn').style.display !== 'none') nextQuestion();
+  }
+});
+
+// Init
+newQuestion();
+</script>
+</body>
+</html>

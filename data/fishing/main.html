@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Daniel's Fishing Game</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a1628;overflow:hidden;width:100vw;height:100vh;font-family:Arial,sans-serif;touch-action:none;user-select:none}
+#c{display:block;position:absolute;top:0;left:0}
+#ui{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;z-index:5;pointer-events:none}
+.hb{background:rgba(0,20,50,0.85);border:2px solid rgba(100,200,255,0.5);border-radius:14px;padding:4px 12px;color:#7df3ff;font-size:15px;font-weight:bold}
+#zone{position:fixed;top:50px;left:50%;transform:translateX(-50%);color:rgba(125,243,255,0.8);font-size:11px;font-weight:bold;z-index:5;pointer-events:none;white-space:nowrap}
+#dm{position:fixed;right:10px;top:60px;width:20px;height:160px;background:rgba(0,0,0,0.5);border:2px solid rgba(100,200,255,0.3);border-radius:10px;overflow:hidden;z-index:5}
+#df{position:absolute;bottom:0;width:100%;background:linear-gradient(to top,#7df3ff,#1a6b8a);transition:height .3s}
+#dl{position:fixed;right:4px;top:226px;color:#7df3ff;font-size:9px;text-align:center;z-index:5;width:36px}
+#btns{position:fixed;bottom:14px;left:10px;display:flex;gap:8px;z-index:5}
+.cb{width:52px;height:52px;border-radius:50%;background:rgba(0,20,50,0.85);border:2px solid rgba(100,200,255,0.4);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#colBtn{position:fixed;bottom:14px;right:10px;background:linear-gradient(135deg,#ff9f43,#ee5a24);border:none;border-radius:30px;padding:10px 14px;font-size:14px;font-weight:bold;color:#fff;cursor:pointer;z-index:5}
+#hs{position:fixed;top:52px;left:50%;transform:translateX(-50%);background:rgba(0,20,50,0.85);border:2px solid rgba(255,215,0,0.4);border-radius:30px;padding:4px 14px;color:#FFD700;font-size:13px;font-weight:bold;z-index:5;white-space:nowrap;display:flex;align-items:center;gap:8px}
+#ngBtn{background:rgba(255,215,0,0.15);border:1px solid #FFD700;border-radius:14px;padding:2px 10px;color:#FFD700;font-size:12px;font-weight:bold;cursor:pointer}
+#hint{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:rgba(0,20,50,0.85);border:2px solid rgba(100,200,255,0.4);border-radius:20px;padding:7px 18px;color:#fff;font-size:15px;font-weight:bold;z-index:6;transition:opacity .5s;pointer-events:none}
+#popup{position:fixed;top:65px;left:50%;transform:translateX(-50%) translateY(-80px);opacity:0;background:rgba(5,15,40,0.95);border:2px solid #7df3ff;border-radius:16px;padding:8px 16px;z-index:10;display:flex;align-items:center;gap:10px;transition:all .3s;pointer-events:none;white-space:nowrap}
+#popup.show{transform:translateX(-50%) translateY(0);opacity:1}
+#popup canvas{display:block}
+#pname{color:#fff;font-size:12px}
+#ppts{color:#FFD700;font-size:18px;font-weight:bold}
+#pnew{background:#FFD700;color:#000;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:bold;display:none}
+#colModal{position:fixed;inset:0;background:rgba(0,0,10,0.92);z-index:20;display:none;flex-direction:column;align-items:center;padding:14px 8px;overflow-y:auto}
+#colModal.open{display:flex}
+#colModal h1{color:#7df3ff;font-size:22px;margin-bottom:2px}
+#colSub{color:#888;font-size:12px;margin-bottom:10px}
+#colGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:7px;width:100%;max-width:560px}
+.fc{background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.1);border-radius:10px;padding:7px 3px;text-align:center}
+.fc.got{border-color:rgba(125,243,255,0.5)}
+.fc canvas{display:block;margin:0 auto 2px}
+.fn{font-size:8px;color:#ccc;font-weight:bold}
+.fp{font-size:9px;color:#FFD700;font-weight:bold}
+#closeCol{margin-top:14px;background:rgba(26,107,138,0.5);border:2px solid #7df3ff;border-radius:30px;padding:8px 24px;color:#7df3ff;font-size:16px;font-weight:bold;cursor:pointer}
+#start{position:fixed;inset:0;background:linear-gradient(180deg,#87CEEB,#1a6b8a 50%,#0a1628);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+#start h1{font-size:32px;font-weight:bold;color:#fff;text-align:center;text-shadow:0 3px 12px rgba(0,0,0,0.4)}
+#start p{color:#c8ecff;font-size:14px;text-align:center;padding:0 24px;line-height:1.5}
+#startBtn{background:linear-gradient(135deg,#FFD700,#ff9f43);border:none;border-radius:40px;padding:12px 36px;font-size:20px;font-weight:bold;color:#000;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div class="hb">Score: <span id="sc">0</span></div>
+  <div class="hb" style="font-size:11px">Daniel's Fishing!</div>
+  <div class="hb">Fish: <span id="fc2">0</span>/100</div>
+</div>
+<div id="zone">Shallow Waters</div>
+<div id="dm"><div id="df" style="height:0"></div></div>
+<div id="dl">0m</div>
+<div id="btns">
+  <div class="cb" id="bL">&#9664;</div>
+  <div class="cb" id="bR">&#9654;</div>
+</div>
+<button id="colBtn">Collection</button>
+<div id="hs">Best: <span id="hsv">0</span> <button id="ngBtn">New Game</button></div>
+<div id="hint">Tap to Cast!</div>
+<div id="popup">
+  <canvas id="pc" width="52" height="40"></canvas>
+  <div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="color:#7df3ff;font-size:14px;font-weight:bold">Caught!</div>
+      <div id="pnew">NEW!</div>
+    </div>
+    <div id="pname"></div>
+    <div id="ppts"></div>
+  </div>
+</div>
+<div id="colModal">
+  <h1>Fish Collection</h1>
+  <div id="colSub">0/100 caught</div>
+  <div id="colGrid"></div>
+  <button id="closeCol">Close</button>
+</div>
+<div id="start">
+  <div style="font-size:70px">&#127907;</div>
+  <h1>Daniel's<br>Fishing Game!</h1>
+  <p>Tap to cast! Swipe or use arrows to dodge fish. Touch one to catch it. Go deep for rare fish!</p>
+  <button id="startBtn">Start Fishing!</button>
+</div>
+
+<script>
+// ---- FISH DATA ----
+var FISH = [
+  {id:0,  name:"Goldfish",         pts:10,   dep:0,    sz:20,spd:0.9, c1:"#FFD700",c2:"#FF8C00",c3:"#FFF3A0"},
+  {id:1,  name:"Blowfish",         pts:15,   dep:0,    sz:20,spd:0.5, c1:"#FFB347",c2:"#E8871A",c3:"#FFE5B4"},
+  {id:2,  name:"Clownfish",        pts:20,   dep:5,    sz:17,spd:1.1, c1:"#FF6B35",c2:"#fff",   c3:"#333"},
+  {id:3,  name:"Blue Tang",        pts:18,   dep:10,   sz:18,spd:1.0, c1:"#4169E1",c2:"#FFD700",c3:"#6090F0"},
+  {id:4,  name:"Guppy",            pts:8,    dep:0,    sz:10,spd:1.4, c1:"#9B59B6",c2:"#FF69B4",c3:"#D7BDE2"},
+  {id:5,  name:"Angelfish",        pts:25,   dep:15,   sz:19,spd:0.8, c1:"#F0F0F0",c2:"#333",   c3:"#aaa"},
+  {id:6,  name:"Sardine",          pts:5,    dep:0,    sz:12,spd:1.7, c1:"#BDC3C7",c2:"#85929E",c3:"#D5D8DC"},
+  {id:7,  name:"Mackerel",         pts:12,   dep:20,   sz:20,spd:1.3, c1:"#2ECC71",c2:"#196F3D",c3:"#A9DFBF"},
+  {id:8,  name:"Herring",          pts:10,   dep:5,    sz:14,spd:1.5, c1:"#95A5A6",c2:"#5D6D7E",c3:"#D5DBDB"},
+  {id:9,  name:"Perch",            pts:14,   dep:10,   sz:17,spd:0.9, c1:"#E67E22",c2:"#784212",c3:"#FAD7A0"},
+  {id:10, name:"Tuna",             pts:40,   dep:100,  sz:26,spd:1.9, c1:"#2980B9",c2:"#1A5276",c3:"#85C1E9"},
+  {id:11, name:"Salmon",           pts:35,   dep:80,   sz:24,spd:1.4, c1:"#E84393",c2:"#922B21",c3:"#FADBD8"},
+  {id:12, name:"Cod",              pts:30,   dep:60,   sz:22,spd:0.9, c1:"#7F8C8D",c2:"#2C3E50",c3:"#BDC3C7"},
+  {id:13, name:"Halibut",          pts:45,   dep:120,  sz:28,spd:0.5, c1:"#D5C98A",c2:"#8B7355",c3:"#F5DEB3"},
+  {id:14, name:"Swordfish",        pts:55,   dep:150,  sz:32,spd:2.3, c1:"#1ABC9C",c2:"#0E6655",c3:"#A2D9CE"},
+  {id:15, name:"Barracuda",        pts:50,   dep:130,  sz:28,spd:2.1, c1:"#7DCEA0",c2:"#1E8449",c3:"#D5F5E3"},
+  {id:16, name:"Snapper",          pts:38,   dep:90,   sz:20,spd:1.2, c1:"#E74C3C",c2:"#922B21",c3:"#FADBD8"},
+  {id:17, name:"Grouper",          pts:42,   dep:110,  sz:26,spd:0.7, c1:"#8E44AD",c2:"#6C3483",c3:"#D2B4DE"},
+  {id:18, name:"Flounder",         pts:33,   dep:70,   sz:24,spd:0.5, c1:"#F39C12",c2:"#784212",c3:"#FAD7A0"},
+  {id:19, name:"Mahi-Mahi",        pts:48,   dep:140,  sz:27,spd:1.7, c1:"#1ABC9C",c2:"#F39C12",c3:"#85C1E9"},
+  {id:20, name:"Wahoo",            pts:52,   dep:160,  sz:30,spd:2.5, c1:"#3498DB",c2:"#1A5276",c3:"#AED6F1"},
+  {id:21, name:"Pompano",          pts:36,   dep:85,   sz:20,spd:1.1, c1:"#F1C40F",c2:"#9A7D0A",c3:"#FEF9E7"},
+  {id:22, name:"Amberjack",        pts:44,   dep:125,  sz:25,spd:1.5, c1:"#E67E22",c2:"#784212",c3:"#FAD7A0"},
+  {id:23, name:"Cobia",            pts:46,   dep:135,  sz:27,spd:1.6, c1:"#2C3E50",c2:"#1A252F",c3:"#85929E"},
+  {id:24, name:"Triggerfish",      pts:28,   dep:55,   sz:20,spd:0.8, c1:"#8E44AD",c2:"#F39C12",c3:"#D2B4DE"},
+  {id:25, name:"Marlin",           pts:80,   dep:300,  sz:36,spd:2.7, c1:"#2471A3",c2:"#154360",c3:"#85C1E9"},
+  {id:26, name:"Sailfish",         pts:85,   dep:320,  sz:38,spd:3.1, c1:"#1A5276",c2:"#2980B9",c3:"#AED6F1"},
+  {id:27, name:"Swordfish King",   pts:90,   dep:350,  sz:40,spd:2.9, c1:"#17A589",c2:"#0E6655",c3:"#A2D9CE"},
+  {id:28, name:"Giant Trevally",   pts:70,   dep:280,  sz:32,spd:2.2, c1:"#717D7E",c2:"#2C3E50",c3:"#BDC3C7"},
+  {id:29, name:"Yellowfin Tuna",   pts:75,   dep:290,  sz:34,spd:2.3, c1:"#F4D03F",c2:"#1A5276",c3:"#85C1E9"},
+  {id:30, name:"Bigeye Tuna",      pts:78,   dep:310,  sz:32,spd:2.2, c1:"#1F618D",c2:"#F1C40F",c3:"#AED6F1"},
+  {id:31, name:"Oarfish",          pts:120,  dep:400,  sz:40,spd:1.1, c1:"#C0392B",c2:"#922B21",c3:"#F1948A"},
+  {id:32, name:"Lancetfish",       pts:95,   dep:360,  sz:36,spd:2.0, c1:"#7B241C",c2:"#4A235A",c3:"#E59866"},
+  {id:33, name:"Escolar",          pts:88,   dep:340,  sz:34,spd:1.7, c1:"#212F3C",c2:"#566573",c3:"#717D7E"},
+  {id:34, name:"Hatchetfish",      pts:65,   dep:260,  sz:16,spd:1.4, c1:"#85C1E9",c2:"#2980B9",c3:"#D6EAF8"},
+  {id:35, name:"Flashlight Fish",  pts:70,   dep:270,  sz:15,spd:1.3, c1:"#AED6F1",c2:"#00CCCC",c3:"#1A5276"},
+  {id:36, name:"Cookiecutter",     pts:100,  dep:380,  sz:22,spd:1.6, c1:"#717D7E",c2:"#424949",c3:"#BDC3C7"},
+  {id:37, name:"Viperfish",        pts:110,  dep:390,  sz:28,spd:1.8, c1:"#1B2631",c2:"#00CCAA",c3:"#0E6655"},
+  {id:38, name:"Fangtooth",        pts:105,  dep:370,  sz:18,spd:1.5, c1:"#212F3C",c2:"#E74C3C",c3:"#566573"},
+  {id:39, name:"Dragonfish",       pts:115,  dep:395,  sz:24,spd:1.7, c1:"#4A235A",c2:"#CC00CC",c3:"#1B2631"},
+  {id:40, name:"Giant Squid",      pts:150,  dep:600,  sz:40,spd:1.9, c1:"#884EA0",c2:"#6C3483",c3:"#D2B4DE"},
+  {id:41, name:"Cuttlefish",       pts:130,  dep:550,  sz:32,spd:1.4, c1:"#7D3C98",c2:"#F39C12",c3:"#D2B4DE"},
+  {id:42, name:"Dumbo Octopus",    pts:160,  dep:650,  sz:30,spd:0.9, c1:"#E8DAEF",c2:"#884EA0",c3:"#F9EBEA"},
+  {id:43, name:"Anglerfish",       pts:200,  dep:700,  sz:34,spd:0.8, c1:"#1C2833",c2:"#CCCC00",c3:"#E74C3C"},
+  {id:44, name:"Blobfish",         pts:180,  dep:680,  sz:30,spd:0.4, c1:"#FADBD8",c2:"#F1948A",c3:"#FEF9E7"},
+  {id:45, name:"Barreleye",        pts:170,  dep:660,  sz:20,spd:1.0, c1:"#D5DBDB",c2:"#00CC00",c3:"#2C3E50"},
+  {id:46, name:"Gulper Eel",       pts:190,  dep:690,  sz:38,spd:1.2, c1:"#212F3C",c2:"#1ABC9C",c3:"#1B2631"},
+  {id:47, name:"Pelican Eel",      pts:185,  dep:685,  sz:36,spd:1.0, c1:"#17202A",c2:"#E74C3C",c3:"#212F3C"},
+  {id:48, name:"Stoplight Fish",   pts:145,  dep:580,  sz:16,spd:1.3, c1:"#C0392B",c2:"#00CC00",c3:"#1A252F"},
+  {id:49, name:"Lanternfish",      pts:140,  dep:560,  sz:13,spd:1.4, c1:"#F8C471",c2:"#FFFFFF",c3:"#1A252F"},
+  {id:50, name:"Rattail Fish",     pts:135,  dep:540,  sz:25,spd:0.9, c1:"#7F8C8D",c2:"#5D6D7E",c3:"#D5DBDB"},
+  {id:51, name:"Grenadier",        pts:155,  dep:620,  sz:28,spd:0.8, c1:"#6E2F1A",c2:"#4A235A",c3:"#E59866"},
+  {id:52, name:"Slickhead",        pts:148,  dep:590,  sz:23,spd:1.0, c1:"#566573",c2:"#2C3E50",c3:"#ABB2B9"},
+  {id:53, name:"Spiderfish",       pts:175,  dep:670,  sz:18,spd:0.7, c1:"#212F3C",c2:"#E74C3C",c3:"#566573"},
+  {id:54, name:"Footballfish",     pts:195,  dep:695,  sz:25,spd:0.5, c1:"#1A5276",c2:"#FFD700",c3:"#2980B9"},
+  {id:55, name:"Giant Isopod",     pts:250,  dep:1000, sz:30,spd:0.6, c1:"#717D7E",c2:"#424949",c3:"#BDC3C7"},
+  {id:56, name:"Sea Spider",       pts:260,  dep:1050, sz:24,spd:0.9, c1:"#922B21",c2:"#4A235A",c3:"#E59866"},
+  {id:57, name:"Frilled Shark",    pts:300,  dep:1100, sz:40,spd:1.6, c1:"#2E4057",c2:"#BDC3C7",c3:"#ABB2B9"},
+  {id:58, name:"Goblin Shark",     pts:280,  dep:1080, sz:38,spd:1.4, c1:"#FAD7A0",c2:"#E74C3C",c3:"#FDFEFE"},
+  {id:59, name:"Megamouth Shark",  pts:290,  dep:1090, sz:42,spd:1.2, c1:"#1C2833",c2:"#FFFFFF",c3:"#5D6D7E"},
+  {id:60, name:"Chimaera",         pts:240,  dep:980,  sz:34,spd:1.1, c1:"#ABB2B9",c2:"#2C3E50",c3:"#D5DBDB"},
+  {id:61, name:"Sixgill Shark",    pts:310,  dep:1120, sz:42,spd:1.7, c1:"#566573",c2:"#212F3C",c3:"#ABB2B9"},
+  {id:62, name:"Sleeper Shark",    pts:320,  dep:1150, sz:44,spd:0.9, c1:"#2C3E50",c2:"#566573",c3:"#717D7E"},
+  {id:63, name:"Pacific Viperfish",pts:270,  dep:1060, sz:27,spd:1.6, c1:"#154360",c2:"#00CCAA",c3:"#1A5276"},
+  {id:64, name:"Black Swallower",  pts:265,  dep:1040, sz:20,spd:1.3, c1:"#17202A",c2:"#E74C3C",c3:"#212F3C"},
+  {id:65, name:"Flapjack Octopus", pts:330,  dep:1200, sz:28,spd:0.8, c1:"#D98880",c2:"#884EA0",c3:"#FADBD8"},
+  {id:66, name:"Vampire Squid",    pts:340,  dep:1250, sz:30,spd:1.0, c1:"#6C3483",c2:"#E74C3C",c3:"#D2B4DE"},
+  {id:67, name:"Sea Pig",          pts:350,  dep:1300, sz:25,spd:0.5, c1:"#FDEBD0",c2:"#F0B27A",c3:"#FEF9E7"},
+  {id:68, name:"Coffinfish",       pts:360,  dep:1350, sz:23,spd:0.6, c1:"#E74C3C",c2:"#922B21",c3:"#FADBD8"},
+  {id:69, name:"Snaggletooth",     pts:345,  dep:1280, sz:25,spd:1.2, c1:"#212F3C",c2:"#FFFFFF",c3:"#566573"},
+  {id:70, name:"Colossal Squid",   pts:500,  dep:2000, sz:48,spd:1.6, c1:"#5B2C6F",c2:"#E74C3C",c3:"#D2B4DE"},
+  {id:71, name:"Snailfish",        pts:480,  dep:1900, sz:16,spd:0.4, c1:"#D5DBDB",c2:"#ABB2B9",c3:"#FDFEFE"},
+  {id:72, name:"Giant Amphipod",   pts:460,  dep:1800, sz:26,spd:0.6, c1:"#BDC3C7",c2:"#717D7E",c3:"#D5DBDB"},
+  {id:73, name:"Zombie Worm",      pts:420,  dep:1600, sz:20,spd:0.3, c1:"#F9E79F",c2:"#F39C12",c3:"#FEF9E7"},
+  {id:74, name:"Deep Sea Dragon",  pts:490,  dep:1950, sz:32,spd:1.4, c1:"#1B2631",c2:"#CC00CC",c3:"#4A235A"},
+  {id:75, name:"Whalefish",        pts:470,  dep:1850, sz:38,spd:0.9, c1:"#1A5276",c2:"#2980B9",c3:"#85C1E9"},
+  {id:76, name:"Deepsea Hatchet",  pts:440,  dep:1700, sz:15,spd:1.2, c1:"#85C1E9",c2:"#00CCCC",c3:"#1A5276"},
+  {id:77, name:"Telescope Fish",   pts:450,  dep:1750, sz:18,spd:1.0, c1:"#1C2833",c2:"#00CC77",c3:"#212F3C"},
+  {id:78, name:"Pacific Blackdragon",pts:495,dep:1970, sz:36,spd:1.6, c1:"#17202A",c2:"#CC0000",c3:"#212F3C"},
+  {id:79, name:"Mariana Snailfish",pts:550,  dep:2500, sz:15,spd:0.2, c1:"#D5D8DC",c2:"#ABB2B9",c3:"#FDFEFE"},
+  {id:80, name:"Yeti Crab",        pts:520,  dep:2200, sz:26,spd:0.5, c1:"#FBFCFC",c2:"#D5DBDB",c3:"#BDC3C7"},
+  {id:81, name:"Pompeii Worm",     pts:510,  dep:2100, sz:17,spd:0.4, c1:"#F5CBA7",c2:"#E59866",c3:"#FDEBD0"},
+  {id:82, name:"Deepsea Cusk",     pts:530,  dep:2300, sz:28,spd:0.8, c1:"#5D6D7E",c2:"#2C3E50",c3:"#ABB2B9"},
+  {id:83, name:"Abyssal Grenadier",pts:540,  dep:2400, sz:32,spd:0.6, c1:"#4A235A",c2:"#884EA0",c3:"#D2B4DE"},
+  {id:84, name:"Hairy Angler",     pts:560,  dep:2600, sz:25,spd:0.5, c1:"#6E2F1A",c2:"#CCAA00",c3:"#E59866"},
+  {id:85, name:"Megalodon Jr.",    pts:1000, dep:4000, sz:55,spd:2.7, c1:"#717D7E",c2:"#BDC3C7",c3:"#D5DBDB"},
+  {id:86, name:"Coelacanth",       pts:800,  dep:3000, sz:42,spd:1.2, c1:"#1A8CFF",c2:"#F39C12",c3:"#85C1E9"},
+  {id:87, name:"Giant Oarfish",    pts:850,  dep:3200, sz:52,spd:1.4, c1:"#C0392B",c2:"#F39C12",c3:"#F1948A"},
+  {id:88, name:"Kraken Baby",      pts:900,  dep:3500, sz:54,spd:1.6, c1:"#6C3483",c2:"#E74C3C",c3:"#D2B4DE"},
+  {id:89, name:"Sea Serpent",      pts:950,  dep:3800, sz:58,spd:2.0, c1:"#1E8449",c2:"#F9E79F",c3:"#A9DFBF"},
+  {id:90, name:"Chimera Beast",    pts:1200, dep:4500, sz:60,spd:2.2, c1:"#884EA0",c2:"#F39C12",c3:"#D2B4DE"},
+  {id:91, name:"Abyssal Leviathan",pts:1500, dep:5000, sz:65,spd:2.4, c1:"#1B2631",c2:"#E74C3C",c3:"#5D6D7E"},
+  {id:92, name:"Crystal Jellyfish",pts:700,  dep:2800, sz:34,spd:0.4, c1:"#AED6F1",c2:"#FFFFFF",c3:"#85C1E9"},
+  {id:93, name:"Immortal Jellyfish",pts:750, dep:2900, sz:30,spd:0.3, c1:"#E8DAEF",c2:"#FF69B4",c3:"#D2B4DE"},
+  {id:94, name:"Nautilus King",    pts:780,  dep:2950, sz:36,spd:0.5, c1:"#F0B27A",c2:"#784212",c3:"#FDEBD0"},
+  {id:95, name:"Mantis Shrimp",    pts:600,  dep:2700, sz:23,spd:2.0, c1:"#FF6B9D",c2:"#00CC77",c3:"#FFD700"},
+  {id:96, name:"Horseshoe Crab",   pts:580,  dep:2650, sz:28,spd:0.6, c1:"#7B7D7D",c2:"#424949",c3:"#BDC3C7"},
+  {id:97, name:"Axolotl Fish",     pts:650,  dep:2750, sz:22,spd:0.8, c1:"#FF8DA1",c2:"#FF69B4",c3:"#FFD1DC"},
+  {id:98, name:"Sea Angel",        pts:620,  dep:2720, sz:16,spd:0.5, c1:"#D7BDE2",c2:"#FFFFFF",c3:"#884EA0"},
+  {id:99, name:"Ghost Shark",      pts:2000, dep:6000, sz:68,spd:3.2, c1:"#EAECEE",c2:"#85C1E9",c3:"#FDFEFE"}
+];
+
+// ---- DETAILED FISH SPRITES ----
+var FISH_SHAPES = {
+  0:'normal', 1:'round',   2:'stripe',  3:'normal',  4:'normal',  5:'angel',
+  6:'long',   7:'long',    8:'long',    9:'normal',  10:'long',   11:'normal',
+  12:'normal',13:'flat',   14:'sword',  15:'long',   16:'normal', 17:'round',
+  18:'flat',  19:'normal', 20:'long',   21:'normal', 22:'normal', 23:'long',
+  24:'round', 25:'sword',  26:'sail',   27:'sword',  28:'normal', 29:'long',
+  30:'long',  31:'eel',    32:'long',   33:'long',   34:'hatchet',35:'glow',
+  36:'shark', 37:'viper',  38:'viper',  39:'viper',  40:'squid',  41:'squid',
+  42:'octopus',43:'angler',44:'blob',   45:'barrel', 46:'gulper', 47:'gulper',
+  48:'glow',  49:'glow',   50:'long',   51:'long',   52:'normal', 53:'normal',
+  54:'angler',55:'crab',   56:'crab',   57:'shark',  58:'goblin', 59:'shark',
+  60:'long',  61:'shark',  62:'shark',  63:'viper',  64:'blob',   65:'octopus',
+  66:'squid', 67:'blob',   68:'blob',   69:'viper',  70:'squid',  71:'long',
+  72:'crab',  73:'worm',   74:'viper',  75:'round',  76:'hatchet',77:'barrel',
+  78:'eel',   79:'long',   80:'crab',   81:'worm',   82:'long',   83:'long',
+  84:'angler',85:'shark',  86:'normal', 87:'eel',    88:'squid',  89:'serpent',
+  90:'dragon',91:'dragon', 92:'jelly',  93:'jelly',  94:'nautilus',95:'crab',
+  96:'crab',  97:'axolotl',98:'jelly',  99:'shark'
+};
+function oval(ctx,x,y,rx,ry){ctx.save();ctx.translate(x,y);ctx.scale(rx,ry);ctx.arc(0,0,1,0,Math.PI*2);ctx.restore();}
+function eyeball(ctx,x,y,r){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+r*.22,y,r*.55,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+r*.32,y-r*.3,r*.22,0,Math.PI*2);ctx.fill();}
+function smileArc(ctx,x,y,r){ctx.strokeStyle='#333';ctx.lineWidth=r*.5;ctx.lineCap='round';ctx.beginPath();ctx.arc(x,y,r,0.1,Math.PI-0.1);ctx.stroke();ctx.lineCap='butt';}
+function drawFish(ctx,fd,cx,cy,sz,dir,wb){
+  var s=sz,w=Math.sin(wb)*0.12,shape=FISH_SHAPES[fd.id]||'normal';
+  ctx.save();ctx.translate(cx,cy);ctx.scale(dir,1);
+  if(fd.dep>400){ctx.shadowColor=fd.c2;ctx.shadowBlur=Math.min(14,4+fd.dep/400);}
+  if(shape==='normal')spNormal(ctx,fd,s,w);
+  else if(shape==='round')spRound(ctx,fd,s,w);
+  else if(shape==='flat')spFlat(ctx,fd,s,w);
+  else if(shape==='long')spLong(ctx,fd,s,w);
+  else if(shape==='angel')spAngel(ctx,fd,s,w);
+  else if(shape==='stripe')spStripe(ctx,fd,s,w);
+  else if(shape==='sword')spSword(ctx,fd,s,w);
+  else if(shape==='sail')spSail(ctx,fd,s,w);
+  else if(shape==='shark')spShark(ctx,fd,s,w);
+  else if(shape==='goblin')spGoblin(ctx,fd,s,w);
+  else if(shape==='squid')spSquid(ctx,fd,s,w);
+  else if(shape==='octopus')spOctopus(ctx,fd,s,w);
+  else if(shape==='jelly')spJelly(ctx,fd,s,w);
+  else if(shape==='crab')spCrab(ctx,fd,s,w);
+  else if(shape==='eel')spEel(ctx,fd,s,w);
+  else if(shape==='worm')spWorm(ctx,fd,s,w);
+  else if(shape==='serpent')spSerpent(ctx,fd,s,w);
+  else if(shape==='dragon')spDragon(ctx,fd,s,w);
+  else if(shape==='angler')spAngler(ctx,fd,s,w);
+  else if(shape==='viper')spViper(ctx,fd,s,w);
+  else if(shape==='blob')spBlob(ctx,fd,s,w);
+  else if(shape==='hatchet')spHatchet(ctx,fd,s,w);
+  else if(shape==='glow')spGlow(ctx,fd,s,w);
+  else if(shape==='barrel')spBarrel(ctx,fd,s,w);
+  else if(shape==='gulper')spGulper(ctx,fd,s,w);
+  else if(shape==='nautilus')spNautilus(ctx,fd,s,w);
+  else if(shape==='axolotl')spAxolotl(ctx,fd,s,w);
+  else spNormal(ctx,fd,s,w);
+  ctx.shadowBlur=0;ctx.restore();
+}
+function spNormal(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.4,s,s*.48);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,s*.1,s*.1+w*s*.4,s*.55,s*.25);ctx.fill();ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(-s*.7,w*s*.4);ctx.lineTo(-s*1.35,-s*.42+w*s);ctx.lineTo(-s*1.35,s*.42+w*s);ctx.closePath();ctx.fill();ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*.1,-s*.44);ctx.lineTo(s*.3,-s*.44-w*s*.5);ctx.lineTo(s*.1,-s*.8+w*s*.3);ctx.lineTo(-s*.3,-s*.65);ctx.closePath();ctx.fill();eyeball(ctx,s*.38,-s*.08+w*s*.2,s*.14);if(fd.dep<400)smileArc(ctx,s*.6,w*s*.2,s*.12);}
+function spRound(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s*1.1,s*.95);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,0,s*.2,s*.65,s*.5);ctx.fill();ctx.fillStyle=fd.c2;for(var a=0;a<8;a++){var ax=Math.cos(a/8*Math.PI*2)*s,ay=Math.sin(a/8*Math.PI*2)*s;ctx.beginPath();ctx.arc(ax,ay+w*s*.2,s*.1,0,Math.PI*2);ctx.fill();}ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*.9,w*s*.3);ctx.lineTo(-s*1.3,-s*.28+w*s);ctx.lineTo(-s*1.3,s*.28+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.35,-s*.1+w*s*.2,s*.18);smileArc(ctx,s*.55,w*s*.2,s*.15);}
+function spFlat(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.5,s*1.1,s*.35);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,s*.1,w*s*.5,s*.6,s*.18);ctx.fill();ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*.9,w*s*.5);ctx.lineTo(-s*1.35,-s*.3+w*s);ctx.lineTo(-s*1.35,s*.3+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.5,-s*.05+w*s*.3,s*.12);eyeball(ctx,s*.35,-s*.17+w*s*.3,s*.1);}
+function spLong(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s*1.2,s*.35);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,s*.2,s*.06+w*s*.3,s*.75,s*.18);ctx.fill();ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*1.0,w*s*.3);ctx.lineTo(-s*1.5,-s*.35+w*s);ctx.lineTo(-s*1.5,s*.35+w*s);ctx.closePath();ctx.fill();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.08;ctx.beginPath();ctx.moveTo(-s*.8,w*s*.4);ctx.lineTo(s*.6,w*s*.2);ctx.stroke();eyeball(ctx,s*.75,-s*.05+w*s*.2,s*.12);}
+function spAngel(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s*.7,s*.85);ctx.fill();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.12;ctx.beginPath();ctx.moveTo(-s*.2,-s*.7+w*s*.3);ctx.lineTo(-s*.2,s*.7+w*s*.3);ctx.stroke();ctx.beginPath();ctx.moveTo(s*.2,-s*.7+w*s*.3);ctx.lineTo(s*.2,s*.7+w*s*.3);ctx.stroke();ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(s*.2,-s*.85+w*s*.3);ctx.lineTo(s*.4,-s*1.3+w*s*.2);ctx.lineTo(-s*.1,-s*.9+w*s*.3);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(s*.2,s*.85+w*s*.3);ctx.lineTo(s*.5,s*1.3+w*s*.4);ctx.lineTo(-s*.1,s*.9+w*s*.3);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*.55,w*s*.3);ctx.lineTo(-s*1.1,-s*.35+w*s);ctx.lineTo(-s*1.1,s*.35+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.3,-s*.1+w*s*.2,s*.13);smileArc(ctx,s*.5,w*s*.2,s*.12);}
+function spStripe(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s,s*.55);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();oval(ctx,-s*.3,w*s*.3,s*.12,s*.5);ctx.fill();ctx.beginPath();oval(ctx,s*.15,w*s*.3,s*.12,s*.5);ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.beginPath();oval(ctx,-s*.3,w*s*.3,s*.12,s*.5);ctx.stroke();ctx.beginPath();oval(ctx,s*.15,w*s*.3,s*.12,s*.5);ctx.stroke();ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(-s*.8,w*s*.3);ctx.lineTo(-s*1.3,-s*.4+w*s);ctx.lineTo(-s*1.3,s*.4+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.5,-s*.1+w*s*.2,s*.14);smileArc(ctx,s*.7,w*s*.2,s*.11);}
+function spSword(ctx,fd,s,w){spLong(ctx,fd,s,w);ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(s*.85,-s*.05+w*s*.2);ctx.lineTo(s*1.9,-s*.02+w*s*.15);ctx.lineTo(s*.85,s*.08+w*s*.2);ctx.closePath();ctx.fill();}
+function spSail(ctx,fd,s,w){spNormal(ctx,fd,s,w);ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*.3,-s*.44+w*s*.1);ctx.lineTo(s*.3,-s*.44);ctx.lineTo(s*.2,-s*1.4+w*s*.3);ctx.lineTo(-s*.2,-s*1.2+w*s*.2);ctx.closePath();ctx.fill();ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(s*.85,w*s*.2);ctx.lineTo(s*1.7,w*s*.15);ctx.lineTo(s*.85,s*.1+w*s*.2);ctx.closePath();ctx.fill();}
+function spShark(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s*1.2,s*.42);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,0,s*.12+w*s*.3,s*.85,s*.22);ctx.fill();ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(-s*.1,-s*.42+w*s*.1);ctx.lineTo(s*.2,-s*.42);ctx.lineTo(s*.1,-s*.95+w*s*.15);ctx.lineTo(-s*.15,-s*.7);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(s*.1,s*.1+w*s*.2);ctx.lineTo(s*.5,s*.55+w*s*.3);ctx.lineTo(-s*.1,s*.25+w*s*.2);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*1.0,w*s*.3);ctx.lineTo(-s*1.5,-s*.5+w*s);ctx.lineTo(-s*1.2,w*s*.5);ctx.lineTo(-s*1.5,s*.5+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.7,-s*.05+w*s*.2,s*.11);}
+function spGoblin(ctx,fd,s,w){spShark(ctx,fd,s,w);ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(s*.8,-s*.1+w*s*.2);ctx.lineTo(s*1.5,-s*.05+w*s*.15);ctx.lineTo(s*.8,s*.12+w*s*.2);ctx.closePath();ctx.fill();ctx.fillStyle='#F1948A';ctx.beginPath();ctx.moveTo(s*.75,s*.05+w*s*.2);ctx.lineTo(s*1.35,s*.15+w*s*.2);ctx.lineTo(s*.75,s*.2+w*s*.2);ctx.closePath();ctx.fill();}
+function spSquid(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,-s*.3+w*s*.2,s*.6,s*.9);ctx.fill();ctx.beginPath();oval(ctx,0,s*.45+w*s*.2,s*.55,s*.4);ctx.fill();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.1;for(var i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(i*s*.12,s*.7+w*s*.2);ctx.quadraticCurveTo(i*s*.25+Math.sin(i*.5)*s*.2,s*1.3+w*s*.4,i*s*.18,s*1.6+w*s*.5);ctx.stroke();}ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*.5,-s*.95+w*s*.2);ctx.lineTo(-s*.8,-s*.3+w*s*.1);ctx.lineTo(-s*.4,-s*.5+w*s*.1);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(s*.5,-s*.95+w*s*.2);ctx.lineTo(s*.8,-s*.3+w*s*.1);ctx.lineTo(s*.4,-s*.5+w*s*.1);ctx.closePath();ctx.fill();eyeball(ctx,-s*.22,s*.35+w*s*.15,s*.16);eyeball(ctx,s*.22,s*.35+w*s*.15,s*.16);}
+function spOctopus(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,-s*.1+w*s*.15,s*.85,s*.8);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,0,s*.15+w*s*.15,s*.5,s*.45);ctx.fill();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.13;for(var i=0;i<8;i++){var bx=(i-3.5)*s*.24;ctx.beginPath();ctx.moveTo(bx,s*.55+w*s*.15);ctx.quadraticCurveTo(bx+(i-3.5)*s*.15,s*1.1+w*s*.3,bx+(i-3.5)*s*.25+Math.sin(i)*s*.15,s*1.5+w*s*.4);ctx.stroke();}eyeball(ctx,-s*.28,-s*.12+w*s*.1,s*.17);eyeball(ctx,s*.28,-s*.12+w*s*.1,s*.17);if(fd.dep<1000)smileArc(ctx,0,s*.18+w*s*.1,s*.2);}
+function spJelly(ctx,fd,s,w){var g=ctx.createRadialGradient(0,-s*.2+w*s*.1,0,0,-s*.2+w*s*.1,s*.9);g.addColorStop(0,fd.c3);g.addColorStop(1,fd.c1+'88');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,-s*.1+w*s*.15,s*.85,Math.PI,0);ctx.closePath();ctx.fill();ctx.strokeStyle=fd.c2+'99';ctx.lineWidth=s*.07;for(var i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(i*s*.22,-s*.1+w*s*.15);ctx.quadraticCurveTo(i*s*.3+Math.sin(i+w)*s*.1,s*.5+w*s*.2,i*s*.22+Math.sin(i+w*2)*s*.15,s*1.0+w*s*.3);ctx.stroke();}eyeball(ctx,-s*.28,-s*.25+w*s*.1,s*.11);eyeball(ctx,s*.28,-s*.25+w*s*.1,s*.11);}
+function spCrab(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.2,s*.85,s*.55);ctx.fill();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.07;ctx.beginPath();oval(ctx,0,w*s*.2,s*.5,s*.32);ctx.stroke();[-1,1].forEach(function(side){ctx.fillStyle=fd.c2;ctx.beginPath();oval(ctx,side*s*1.1,-s*.1+w*s*.2,s*.38,s*.28);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,side*s*1.3,-s*.18+w*s*.2,s*.2,s*.14);ctx.fill();});ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.1;[-1,1].forEach(function(side){[-0.3,0.1,0.4].forEach(function(oy){ctx.beginPath();ctx.moveTo(side*s*.7,oy*s+w*s*.2);ctx.lineTo(side*s*1.3,(oy+.4)*s+w*s*.25);ctx.stroke();});});eyeball(ctx,-s*.3,-s*.3+w*s*.15,s*.13);eyeball(ctx,s*.3,-s*.3+w*s*.15,s*.13);}
+function spEel(ctx,fd,s,w){ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.55;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(s*1.4,w*s*.1);ctx.bezierCurveTo(s*.4,-s*.35+w*s,-s*.4,s*.35+w*s,-s*1.4,w*s*.1);ctx.stroke();ctx.strokeStyle=fd.c3;ctx.lineWidth=s*.25;ctx.beginPath();ctx.moveTo(s*1.2,s*.05+w*s*.1);ctx.bezierCurveTo(s*.3,-s*.2+w*s,-s*.3,s*.2+w*s,-s*1.1,s*.05+w*s*.1);ctx.stroke();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.07;ctx.beginPath();ctx.moveTo(s*.8,-s*.22+w*s*.2);ctx.bezierCurveTo(s*.1,-s*.4+w*s*.3,-s*.5,-s*.3+w*s*.2,-s*1.0,-s*.18+w*s*.1);ctx.stroke();eyeball(ctx,s*1.0,-s*.08+w*s*.1,s*.13);ctx.lineCap='butt';}
+function spWorm(ctx,fd,s,w){ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.45;ctx.lineCap='round';ctx.beginPath();for(var i=0;i<=10;i++){var x=s*1.2-i*s*.24,y=Math.sin(i*.9+w*3)*s*.22;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.2;ctx.beginPath();for(var i=0;i<=10;i++){var x=s*1.2-i*s*.24,y=Math.sin(i*.9+w*3)*s*.22;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();ctx.strokeStyle=fd.c3;ctx.lineWidth=s*.06;for(var i=1;i<10;i++){var x=s*1.2-i*s*.24,y=Math.sin(i*.9+w*3)*s*.22;ctx.beginPath();ctx.arc(x,y,s*.12,0,Math.PI*2);ctx.stroke();}eyeball(ctx,s*1.05,-s*.1,s*.1);ctx.lineCap='butt';}
+function spSerpent(ctx,fd,s,w){ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(s*1.8,w*s*.1);ctx.bezierCurveTo(s*.5,-s*.55+w*s*.8,-s*.5,s*.55+w*s*.8,-s*1.8,w*s*.1);ctx.stroke();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.1;for(var i=0;i<8;i++){var x=s*1.4-i*s*.4,y=Math.sin(i*.8+w*2)*s*.4;ctx.beginPath();ctx.arc(x,y,s*.22,0,Math.PI*2);ctx.stroke();}ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,s*1.7,w*s*.1,s*.38,s*.28);ctx.fill();eyeball(ctx,s*1.85,-s*.05+w*s*.05,s*.12);ctx.strokeStyle='#E74C3C';ctx.lineWidth=s*.07;ctx.beginPath();ctx.moveTo(s*2.02,w*s*.1);ctx.lineTo(s*2.18,-s*.1+w*s*.1);ctx.stroke();ctx.beginPath();ctx.moveTo(s*2.02,w*s*.1);ctx.lineTo(s*2.18,s*.1+w*s*.1);ctx.stroke();ctx.lineCap='butt';}
+function spDragon(ctx,fd,s,w){spSerpent(ctx,fd,s,w);ctx.fillStyle=fd.c2+'88';ctx.beginPath();ctx.moveTo(s*.3,-s*.2+w*s*.2);ctx.lineTo(s*.8,-s*.9+w*s*.1);ctx.lineTo(s*1.1,-s*.3+w*s*.15);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*.3,-s*.2+w*s*.2);ctx.lineTo(-s*.8,-s*.9+w*s*.1);ctx.lineTo(-s*1.1,-s*.3+w*s*.15);ctx.closePath();ctx.fill();ctx.strokeStyle=fd.c3;ctx.lineWidth=s*.1;ctx.beginPath();ctx.moveTo(s*1.55,-s*.1+w*s*.05);ctx.lineTo(s*1.55,-s*.5+w*s*.03);ctx.stroke();ctx.beginPath();ctx.moveTo(s*1.7,-s*.08+w*s*.05);ctx.lineTo(s*1.7,-s*.45+w*s*.03);ctx.stroke();}
+function spAngler(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.2,s*.9,s*.75);ctx.fill();ctx.fillStyle=fd.c3+'66';ctx.beginPath();oval(ctx,s*.05,s*.15+w*s*.2,s*.5,s*.38);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.moveTo(s*.5,-s*.05+w*s*.2);ctx.quadraticCurveTo(s*.8,s*.35+w*s*.25,s*.5,s*.4+w*s*.2);ctx.quadraticCurveTo(s*.2,s*.15+w*s*.2,s*.5,-s*.05+w*s*.2);ctx.fill();ctx.fillStyle='#fff';for(var i=0;i<5;i++){ctx.beginPath();ctx.moveTo(s*(.55+i*.06),-s*.03+w*s*.2);ctx.lineTo(s*(.57+i*.06),s*.08+w*s*.22);ctx.lineTo(s*(.59+i*.06),-s*.03+w*s*.2);ctx.closePath();ctx.fill();}ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.06;ctx.beginPath();ctx.moveTo(s*.1,-s*.75+w*s*.2);ctx.quadraticCurveTo(-s*.2,-s*1.1+w*s*.1,s*.4,-s*.9+w*s*.05);ctx.stroke();ctx.fillStyle=fd.c2;ctx.shadowColor=fd.c2;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(s*.4,-s*.9+w*s*.05,s*.12,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(-s*.75,w*s*.2);ctx.lineTo(-s*1.25,-s*.35+w*s);ctx.lineTo(-s*1.25,s*.35+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.2,-s*.25+w*s*.2,s*.19);}
+function spViper(ctx,fd,s,w){spLong(ctx,fd,s,w);ctx.fillStyle='#fff';[s*.6,s*.75,s*.85].forEach(function(x){ctx.beginPath();ctx.moveTo(x,-s*.12+w*s*.2);ctx.lineTo(x+s*.04,s*.14+w*s*.25);ctx.lineTo(x+s*.08,-s*.12+w*s*.2);ctx.closePath();ctx.fill();});ctx.shadowColor=fd.c2;ctx.shadowBlur=6;eyeball(ctx,s*.75,-s*.1+w*s*.2,s*.12);ctx.shadowBlur=0;ctx.fillStyle=fd.c2+'cc';for(var i=0;i<4;i++){ctx.beginPath();ctx.arc(-s*.2-i*s*.22,w*s*.2,s*.06,0,Math.PI*2);ctx.fill();}}
+function spBlob(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.2,s*.92,s*.82);ctx.fill();ctx.fillStyle=fd.c2;ctx.beginPath();oval(ctx,s*.45,s*.05+w*s*.2,s*.28,s*.22);ctx.fill();ctx.strokeStyle='#555';ctx.lineWidth=s*.09;ctx.lineCap='round';ctx.beginPath();ctx.arc(s*.35,s*.38+w*s*.2,s*.22,Math.PI*.15,Math.PI*.85);ctx.stroke();ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(-s*.8,w*s*.2);ctx.lineTo(-s*1.2,-s*.25+w*s);ctx.lineTo(-s*1.2,s*.25+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.18,-s*.18+w*s*.2,s*.19);ctx.lineCap='butt';}
+function spHatchet(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.2,s*.65,s);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,0,s*.2+w*s*.2,s*.35,s*.55);ctx.fill();ctx.fillStyle=fd.c2;ctx.beginPath();ctx.moveTo(-s*.6,w*s*.2);ctx.lineTo(-s*1.1,-s*.28+w*s);ctx.lineTo(-s*1.1,s*.28+w*s);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.shadowColor='#fff';ctx.shadowBlur=4;for(var i=0;i<4;i++){ctx.beginPath();ctx.arc(-s*.15+i*s*.12,s*.6+w*s*.2,s*.05,0,Math.PI*2);ctx.fill();}ctx.shadowBlur=0;eyeball(ctx,s*.25,-s*.4+w*s*.15,s*.18);}
+function spGlow(ctx,fd,s,w){ctx.shadowColor=fd.c2;ctx.shadowBlur=12;ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s*.8,s*.45);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=fd.c2;ctx.shadowColor=fd.c2;ctx.shadowBlur=8;ctx.beginPath();oval(ctx,-s*.2,s*.1+w*s*.2,s*.22,s*.15);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=fd.c3;ctx.beginPath();ctx.moveTo(-s*.7,w*s*.3);ctx.lineTo(-s*1.1,-s*.28+w*s);ctx.lineTo(-s*1.1,s*.28+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.38,-s*.08+w*s*.2,s*.14);}
+function spBarrel(ctx,fd,s,w){ctx.fillStyle=fd.c1+'aa';ctx.beginPath();oval(ctx,0,w*s*.2,s*.75,s*.55);ctx.fill();ctx.fillStyle='#1a1a1a';ctx.beginPath();oval(ctx,-s*.22,-s*.18+w*s*.15,s*.14,s*.3);ctx.fill();ctx.beginPath();oval(ctx,s*.22,-s*.18+w*s*.15,s*.14,s*.3);ctx.fill();ctx.fillStyle=fd.c2;ctx.shadowColor=fd.c2;ctx.shadowBlur=5;ctx.beginPath();oval(ctx,-s*.22,-s*.28+w*s*.15,s*.08,s*.14);ctx.fill();ctx.beginPath();oval(ctx,s*.22,-s*.28+w*s*.15,s*.08,s*.14);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=fd.c3;ctx.beginPath();ctx.moveTo(-s*.7,w*s*.2);ctx.lineTo(-s*1.1,-s*.28+w*s);ctx.lineTo(-s*1.1,s*.28+w*s);ctx.closePath();ctx.fill();}
+function spGulper(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,-s*.2,w*s*.2,s*.6,s*.35);ctx.fill();ctx.beginPath();ctx.moveTo(s*.35,-s*.12+w*s*.2);ctx.quadraticCurveTo(s*1.1,-s*.1+w*s*.1,s*1.0,s*.25+w*s*.3);ctx.quadraticCurveTo(s*.6,s*.22+w*s*.25,s*.35,s*.12+w*s*.2);ctx.closePath();ctx.fill();ctx.fillStyle=fd.c2+'88';ctx.beginPath();ctx.moveTo(s*.35,-s*.1+w*s*.2);ctx.quadraticCurveTo(s*1.0,-s*.08+w*s*.12,s*.9,s*.22+w*s*.28);ctx.quadraticCurveTo(s*.55,s*.2+w*s*.23,s*.35,s*.1+w*s*.2);ctx.closePath();ctx.fill();ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.14;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-s*.7,w*s*.2);ctx.quadraticCurveTo(-s*1.1,s*.12+w*s*.4,-s*1.5,-s*.05+w*s*.1);ctx.stroke();ctx.fillStyle=fd.c2;ctx.shadowColor=fd.c2;ctx.shadowBlur=7;ctx.beginPath();ctx.arc(-s*1.5,-s*.05+w*s*.1,s*.1,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;eyeball(ctx,s*.28,-s*.06+w*s*.18,s*.12);ctx.lineCap='butt';}
+function spNautilus(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();ctx.arc(0,w*s*.1,s*.8,0,Math.PI*2);ctx.fill();ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.07;for(var i=0;i<6;i++){ctx.beginPath();ctx.moveTo(0,w*s*.1);ctx.lineTo(Math.cos(i/6*Math.PI*2)*s*.8,Math.sin(i/6*Math.PI*2)*s*.8*.9+w*s*.1);ctx.stroke();}ctx.strokeStyle=fd.c2;ctx.lineWidth=s*.12;ctx.beginPath();for(var a=0;a<Math.PI*3;a+=.1){var r=s*(.15+a*.22),x=Math.cos(a+w)*r,y=Math.sin(a+w)*r*.9;if(a<.1)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();ctx.strokeStyle=fd.c3;ctx.lineWidth=s*.09;ctx.lineCap='round';for(var i=0;i<6;i++){ctx.beginPath();ctx.moveTo(s*.7,-s*.1+w*s*.1+i*s*.06);ctx.lineTo(s*1.3,-s*.2+w*s*.05+i*s*.08);ctx.stroke();}eyeball(ctx,s*.35,-s*.1+w*s*.1,s*.14);ctx.lineCap='butt';}
+function spAxolotl(ctx,fd,s,w){ctx.fillStyle=fd.c1;ctx.beginPath();oval(ctx,0,w*s*.3,s*.9,s*.55);ctx.fill();ctx.fillStyle=fd.c3;ctx.beginPath();oval(ctx,0,s*.1+w*s*.3,s*.55,s*.3);ctx.fill();ctx.fillStyle=fd.c2;[-s*.5,-s*.3,-s*.1].forEach(function(gx){ctx.beginPath();ctx.moveTo(gx,-s*.42+w*s*.1);ctx.bezierCurveTo(gx-s*.1,-s*.8+w*s*.05,gx+s*.1,-s*.9+w*s*.03,gx,-s*1.0+w*s*.02);ctx.bezierCurveTo(gx+s*.15,-s*.9+w*s*.03,gx+s*.08,-s*.7+w*s*.05,gx,-s*.42+w*s*.1);ctx.fill();});ctx.strokeStyle=fd.c1;ctx.lineWidth=s*.12;ctx.lineCap='round';[[s*.5,s*.3],[s*.2,s*.35],[-s*.2,s*.35],[-s*.5,s*.3]].forEach(function(l){ctx.beginPath();ctx.moveTo(l[0],l[1]+w*s*.3);ctx.lineTo(l[0]+(l[0]>0?1:-1)*s*.15,l[1]+s*.35+w*s*.35);ctx.stroke();});ctx.fillStyle=fd.c1;ctx.beginPath();ctx.moveTo(-s*.85,w*s*.3);ctx.lineTo(-s*1.3,-s*.28+w*s);ctx.lineTo(-s*1.3,s*.28+w*s);ctx.closePath();ctx.fill();eyeball(ctx,s*.38,-s*.1+w*s*.2,s*.14);smileArc(ctx,s*.58,s*.05+w*s*.2,s*.13);ctx.lineCap='butt';}
+
+// ---- CANVAS + STATE ----
+var canvas = document.getElementById("c");
+var ctx = canvas.getContext("2d");
+var W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+var M2PX = 2;          // 1 meter = 2 px
+var SINK  = 32;        // m/sec down
+var REEL  = 64;        // m/sec up
+var HRAT  = 0.62;      // hook screen position ratio
+var WRAT  = 0.25;      // water surface ratio
+
+var ZONES = [
+  {m:0,    label:"Shallow Waters"},
+  {m:100,  label:"Coastal Zone"},
+  {m:300,  label:"Deep Sea"},
+  {m:600,  label:"Twilight Zone"},
+  {m:1000, label:"Midnight Zone"},
+  {m:2000, label:"Abyssal Zone"},
+  {m:4000, label:"Hadal Zone"},
+  {m:6000, label:"Legendary Depths"}
+];
+
+function getZone(d) {
+  for (var i = ZONES.length-1; i >= 0; i--) if (d >= ZONES[i].m) return ZONES[i].label;
+  return ZONES[0].label;
+}
+
+function lsGet(k,def){ try{ return localStorage.getItem(k)||def; }catch(e){ return def; } }
+function lsSet(k,v){   try{ localStorage.setItem(k,v); }catch(e){} }
+
+var G = {
+  phase: "idle",
+  score: 0, hs: parseInt(lsGet("dfhs","0")),
+  depth: 0, maxDep: 0, camDep: 0,
+  bx: 0,       // hook x
+  mdir: 0,     // move direction
+  catchT: 0,   // catch cooldown
+  spawnT: 0,   // spawn timer
+  fishes: [], parts: [], bubbles: [],
+  caught: {},  nCaught: 0,
+  wt: 0,       // wave time
+  waterY: 0, boatX: 0
+};
+
+function hookWY() { return G.depth * M2PX; }
+function toScrY(wy) { return G.waterY + wy - G.camDep; }
+
+// ---- SPAWN ----
+function spawnBatch() {
+  if (G.depth < 50) return;
+  var screenM = (H - G.waterY) / M2PX;
+  var lookM   = SINK * 5 * 3;
+  var minDepth, maxDepth;
+
+  if (G.phase === 'reeling') {
+    minDepth = Math.max(10, G.depth - screenM * 2);
+    maxDepth = Math.max(20, G.depth - screenM * 0.5);
+  } else {
+    minDepth = Math.max(50, G.depth + screenM * 0.5);
+    maxDepth = G.depth + screenM + lookM;
+  }
+
+  if (maxDepth <= minDepth) return;
+
+  var count = 36;
+  var range = maxDepth - minDepth;
+  // Divide the range into evenly-spaced slots, place one fish per slot
+  var slotSize = range / count;
+
+  for (var i = 0; i < count; i++) {
+    // Each fish gets its own depth slot with a small random offset within it
+    var slotStart = minDepth + i * slotSize;
+    var depM = slotStart + Math.random() * slotSize * 0.8; // stays within slot
+    depM = Math.max(50, depM);
+
+    var pool = [];
+    for (var j = 0; j < FISH.length; j++) {
+      if (FISH[j].dep <= depM) pool.push(FISH[j]);
+    }
+    if (!pool.length) continue;
+    pool.sort(function(a,b){ return b.dep - a.dep; });
+    var pick = pool[Math.floor(Math.random() * Math.min(8, pool.length))];
+    var spd  = (0.5 + Math.random() * pick.spd) * 26;
+    G.fishes.push({
+      fid: pick.id,
+      x:   Math.random() * W,
+      wy:  depM * M2PX,
+      vx:  spd * (Math.random() < 0.5 ? 1 : -1),
+      sz:  pick.sz * (0.85 + Math.random() * 0.3),
+      wb:  Math.random() * Math.PI * 2,
+      ws:  2 + Math.random() * 2,
+      caught: false, alpha: 1
+    });
+  }
+}
+
+function addParticles(x, y, col) {
+  for (var i = 0; i < 10; i++) {
+    G.parts.push({x:x, y:y, vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*4-2,
+      life:1, dec:0.03, r:3+Math.random()*4, col:col});
+  }
+}
+
+function addBubbles(x, wy) {
+  for (var i = 0; i < 3; i++) {
+    G.bubbles.push({x:x+(Math.random()-0.5)*20, wy:wy,
+      vy:-28-Math.random()*25, r:2+Math.random()*4, life:1, dec:0.01});
+  }
+}
+
+// ---- DRAW ----
+function drawSky() {
+  // Sky gradient using fillRect bands (no createLinearGradient issues)
+  var grad = ctx.createLinearGradient(0,0,0,G.waterY);
+  grad.addColorStop(0, "#5BA3C9");
+  grad.addColorStop(1, "#87CEEB");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, G.waterY);
+  // Sun
+  ctx.fillStyle = "rgba(255,240,80,0.9)";
+  ctx.beginPath(); ctx.arc(W*0.82, G.waterY*0.22, 36, 0, Math.PI*2); ctx.fill();
+  // Clouds
+  [[W*0.15, G.waterY*0.3, 50],[W*0.55, G.waterY*0.18, 38],[W*0.38, G.waterY*0.5, 32]].forEach(function(c){
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.beginPath(); ctx.arc(c[0], c[1], c[2], 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(c[0]+c[2]*0.6, c[1]-c[2]*0.2, c[2]*0.65, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(c[0]-c[2]*0.55, c[1], c[2]*0.55, 0, Math.PI*2); ctx.fill();
+  });
+}
+
+function drawWater() {
+  G.wt += 0.02;
+  var wY = G.waterY;
+  var dr = Math.min(G.depth / 5000, 1);
+  var r = Math.round(26 - dr*14), g2 = Math.round(107 - dr*75), b = Math.round(138 - dr*95);
+  var grad = ctx.createLinearGradient(0, wY, 0, H);
+  grad.addColorStop(0, "rgb("+r+","+g2+","+b+")");
+  grad.addColorStop(1, "rgb(10,15,40)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, wY, W, H - wY);
+  // Wave
+  ctx.fillStyle = "rgba(135,206,235,0.25)";
+  ctx.beginPath(); ctx.moveTo(0, wY);
+  for (var x = 0; x <= W; x += 10) {
+    ctx.lineTo(x, wY + Math.sin(x*0.022 + G.wt)*4 + Math.sin(x*0.055 + G.wt*1.5)*2);
+  }
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  // Zone lines
+  ctx.font = "11px Arial"; ctx.textAlign = "left";
+  for (var i = 0; i < ZONES.length; i++) {
+    var sy = toScrY(ZONES[i].m * M2PX);
+    if (sy > wY && sy < H) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 1;
+      ctx.setLineDash([8,12]);
+      ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(W,sy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fillText(ZONES[i].label, 8, sy-4);
+      ctx.restore();
+    }
+  }
+}
+
+function drawFishes() {
+  ctx.save();
+  // Hard clip — nothing renders above the water line
+  ctx.beginPath();
+  ctx.rect(0, G.waterY, W, H - G.waterY);
+  ctx.clip();
+  for (var i = 0; i < G.fishes.length; i++) {
+    var f = G.fishes[i];
+    var sy = toScrY(f.wy);
+    if (sy < G.waterY || sy > H + 80) continue; // skip above water or far off bottom
+    f.wb += f.ws / 60;
+    var fd = FISH[f.fid];
+    var dir = f.vx > 0 ? 1 : -1;
+    ctx.globalAlpha = f.alpha;
+    drawFish(ctx, fd, f.x, sy, f.sz, dir, f.wb);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+function drawBubbles() {
+  ctx.strokeStyle = "rgba(180,240,255,0.7)"; ctx.lineWidth = 1.2;
+  for (var i = 0; i < G.bubbles.length; i++) {
+    var b = G.bubbles[i];
+    var sy = toScrY(b.wy);
+    ctx.globalAlpha = b.life * 0.5;
+    ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawParticles() {
+  for (var i = 0; i < G.parts.length; i++) {
+    var p = G.parts[i];
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBoat() {
+  var bx = G.boatX, by = G.waterY;
+  var wave = Math.sin(G.wt) * 2.5;
+  ctx.save(); ctx.translate(bx, by + wave);
+  // Hull
+  ctx.fillStyle = "#8B4513";
+  ctx.beginPath();
+  ctx.moveTo(-46,0); ctx.lineTo(-50,15); ctx.lineTo(50,15); ctx.lineTo(46,0);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#A0522D"; ctx.fillRect(-42,-8,84,8);
+  // Person body
+  ctx.fillStyle = "#2ECC71"; ctx.fillRect(-8,-30,16,18);
+  ctx.fillStyle = "#FDBCB4";
+  ctx.beginPath(); ctx.arc(0,-36,9,0,Math.PI*2); ctx.fill();
+  // Hat
+  ctx.fillStyle = "#E67E22";
+  ctx.beginPath();
+  ctx.moveTo(-11,-42); ctx.lineTo(11,-42); ctx.lineTo(7,-53); ctx.lineTo(-7,-53);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#5D4037"; ctx.fillRect(-12,-44,24,3);
+  // Rod
+  ctx.strokeStyle = "#4A2800"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(8,-48); ctx.lineTo(40,-63); ctx.stroke();
+  ctx.lineCap = "butt";
+  ctx.restore();
+
+  // Line + hook
+  if (G.phase !== "idle") {
+    var rtx = bx + 40, rty = by + wave - 63;
+    var hookSY = toScrY(hookWY());
+    ctx.strokeStyle = "rgba(255,255,255,0.65)"; ctx.lineWidth = 1.5;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(rtx, rty); ctx.lineTo(G.bx, hookSY); ctx.stroke();
+    ctx.setLineDash([]);
+    if (hookSY <= G.waterY + 3) {
+      ctx.fillStyle = "#E74C3C";
+      ctx.beginPath(); ctx.arc(G.bx, hookSY, 6, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = "#ECF0F1";
+      ctx.beginPath(); ctx.arc(G.bx, hookSY, 6, 0, Math.PI); ctx.fill();
+    } else {
+      ctx.strokeStyle = "#BDC3C7"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(G.bx, hookSY, 4, 0, Math.PI*1.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(G.bx+4, hookSY); ctx.lineTo(G.bx+4, hookSY+4); ctx.stroke();
+    }
+  }
+}
+
+function updateHUD() {
+  var d = Math.round(G.depth);
+  document.getElementById("sc").textContent = Math.floor(G.score);
+  document.getElementById("dl").textContent = d + "m";
+  document.getElementById("df").style.height = Math.min(d/6000*100,100) + "%";
+  document.getElementById("zone").textContent = getZone(d);
+  if (G.score > G.hs) { G.hs = Math.floor(G.score); lsSet("dfhs", G.hs); }
+  document.getElementById("hsv").textContent = G.hs;
+}
+
+// ---- COLLISION ----
+function checkHit() {
+  if (G.catchT > 0) return;
+  var hookSY = toScrY(hookWY());
+  for (var i = 0; i < G.fishes.length; i++) {
+    var f = G.fishes[i];
+    if (f.caught) continue;
+    var sy = toScrY(f.wy);
+    var dx = Math.abs(G.bx - f.x);
+    var dy = Math.abs(hookSY - sy);
+    // Fish sprites are ~1.5sz wide and ~sz tall — touch anywhere on body
+    if (dx < f.sz * 1.5 && dy < f.sz * 0.9) {
+      doCatch(f);
+      return;
+    }
+  }
+}
+
+function doCatch(f) {
+  f.caught = true;
+  var fd = FISH[f.fid];
+  var isNew = !G.caught[fd.id];
+  if (isNew) { G.caught[fd.id] = true; G.nCaught++; document.getElementById("fc2").textContent = G.nCaught; }
+  var pts = fd.pts + Math.floor(G.depth * 0.12);
+  G.score += pts;
+  var hookSY = toScrY(hookWY());
+  addParticles(G.bx, hookSY, fd.c1);
+  addBubbles(G.bx, hookWY());
+  // Popup
+  var pc = document.getElementById("pc");
+  var pctx = pc.getContext("2d");
+  pctx.clearRect(0,0,52,40);
+  drawFish(pctx, fd, 26, 20, Math.min(fd.sz*0.75, 17), 1, Math.PI/10);
+  document.getElementById("pname").textContent = fd.name;
+  document.getElementById("ppts").textContent = "+" + pts + " pts!";
+  document.getElementById("pnew").style.display = isNew ? "inline-block" : "none";
+  var pop = document.getElementById("popup");
+  pop.classList.add("show");
+  G.catchT = 2;
+  setTimeout(function(){ pop.classList.remove("show"); }, 2200);
+  if (G.phase === "casting") G.phase = "reeling";
+}
+
+// ---- UPDATE ----
+function update(dt) {
+  G.waterY = H * WRAT;
+  G.boatX  = W * 0.38;
+
+  // Spawn timer
+  if (G.phase === "casting" || G.phase === "reeling") {
+    G.spawnT -= dt;
+    if (G.spawnT <= 0) {
+      spawnBatch();
+      G.spawnT = G.phase === "reeling" ? 2.5 : 5;
+    }
+  }
+
+  // Update fish
+  for (var i = 0; i < G.fishes.length; i++) {
+    var f = G.fishes[i];
+    if (f.caught) {
+      f.wy = hookWY();
+      f.alpha = Math.max(0, f.alpha - 0.03);
+    } else {
+      f.x += f.vx * dt;
+      if (f.x < -80)  f.vx =  Math.abs(f.vx);
+      if (f.x > W+80) f.vx = -Math.abs(f.vx);
+    }
+  }
+  // Cull
+  var alive = [];
+  for (var i = 0; i < G.fishes.length; i++) {
+    var f = G.fishes[i];
+    if (f.caught && f.alpha <= 0) continue;       // fully faded after catch
+    var sy = toScrY(f.wy);
+    if (!f.caught && sy < -150) continue;          // scrolled above screen, remove
+    if (!f.caught && sy > H + 400) continue;       // too far below, remove
+    alive.push(f);
+  }
+  G.fishes = alive;
+
+  // Particles
+  for (var i = 0; i < G.parts.length; i++) {
+    var p = G.parts[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= p.dec;
+  }
+  G.parts = G.parts.filter(function(p){ return p.life > 0; });
+
+  // Bubbles
+  for (var i = 0; i < G.bubbles.length; i++) {
+    var b = G.bubbles[i];
+    b.wy += b.vy * dt; b.life -= b.dec;
+  }
+  G.bubbles = G.bubbles.filter(function(b){ return b.life > 0; });
+
+  if (G.catchT > 0) G.catchT -= dt;
+
+  // Phase logic
+  if (G.phase === "casting") {
+    G.bx = Math.max(20, Math.min(W-20, G.bx + G.mdir * 160 * dt));
+    G.depth += SINK * dt;
+    G.camDep = Math.max(0, hookWY() - (H * HRAT - G.waterY));
+    G.maxDep = Math.max(G.maxDep, G.depth);
+    if (Math.random() < 0.1) addBubbles(G.bx, hookWY());
+    checkHit();
+    G.score += G.depth * dt * 0.005;
+    if (G.depth > 7000) G.phase = "reeling";
+
+  } else if (G.phase === "reeling") {
+    G.bx = Math.max(20, Math.min(W-20, G.bx + G.mdir * 120 * dt));
+    G.depth = Math.max(0, G.depth - REEL * dt);
+    var tgt = Math.max(0, hookWY() - (H * HRAT - G.waterY));
+    G.camDep += (tgt - G.camDep) * Math.min(1, dt * 4);
+    checkHit();
+    if (G.depth <= 0) {
+      G.depth = 0; G.camDep = 0; G.phase = "idle";
+      G.bx = G.boatX + 42;
+    }
+  }
+
+  updateHUD();
+}
+
+// ---- RENDER ----
+function render() {
+  ctx.clearRect(0,0,W,H);
+  drawSky();
+  drawWater();
+  drawBubbles();
+  drawFishes();
+  drawParticles();
+  drawBoat();
+}
+
+// ---- LOOP ----
+var last = 0;
+function loop(ts) {
+  var dt = Math.min((ts - last) / 1000, 0.05);
+  last = ts;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ---- INPUT ----
+function cast() {
+  if (G.phase === "idle") {
+    G.phase = "casting";
+    G.score = 0;  // reset score for this cast
+    G.depth = 0; G.maxDep = 0;
+    G.bx = G.boatX + 42;
+    G.fishes = [];
+    G.spawnT = 0;
+    G.caught = {}; G.nCaught = 0;
+    document.getElementById("sc").textContent = "0";
+    document.getElementById("fc2").textContent = "0";
+    document.getElementById("hint").style.opacity = "0";
+  }
+}
+
+canvas.addEventListener("click", cast);
+var txStart = null;
+canvas.addEventListener("touchstart", function(e) {
+  e.preventDefault();
+  txStart = e.touches[0].clientX;
+  cast();
+}, {passive:false});
+canvas.addEventListener("touchmove", function(e) {
+  e.preventDefault();
+  if (txStart === null) return;
+  var dx = e.touches[0].clientX - txStart;
+  G.mdir = dx > 8 ? 1 : dx < -8 ? -1 : 0;
+}, {passive:false});
+canvas.addEventListener("touchend", function(e) {
+  e.preventDefault();
+  txStart = null; G.mdir = 0;
+}, {passive:false});
+
+window.addEventListener("keydown", function(e) {
+  if (e.key==="ArrowLeft"||e.key==="a") G.mdir=-1;
+  if (e.key==="ArrowRight"||e.key==="d") G.mdir=1;
+});
+window.addEventListener("keyup", function(e) {
+  if (["ArrowLeft","ArrowRight","a","d"].indexOf(e.key)>=0) G.mdir=0;
+});
+
+function hold(dir) { G.mdir = dir; }
+function rel()     { G.mdir = 0; }
+var bL = document.getElementById("bL"), bR = document.getElementById("bR");
+bL.addEventListener("touchstart",function(e){e.preventDefault();hold(-1);},{passive:false});
+bL.addEventListener("touchend",  function(e){e.preventDefault();rel();},{passive:false});
+bR.addEventListener("touchstart",function(e){e.preventDefault();hold(1);},{passive:false});
+bR.addEventListener("touchend",  function(e){e.preventDefault();rel();},{passive:false});
+bL.addEventListener("mousedown",function(){hold(-1);}); bL.addEventListener("mouseup",rel);
+bR.addEventListener("mousedown",function(){hold(1);}); bR.addEventListener("mouseup",rel);
+
+// ---- COLLECTION ----
+function buildCol() {
+  var grid = document.getElementById("colGrid");
+  grid.innerHTML = "";
+  for (var i = 0; i < FISH.length; i++) {
+    var fd = FISH[i];
+    var got = !!G.caught[fd.id];
+    var card = document.createElement("div");
+    card.className = "fc" + (got?" got":"");
+    var oc = document.createElement("canvas");
+    oc.width = 56; oc.height = 44;
+    var octx = oc.getContext("2d");
+    if (got) {
+      drawFish(octx, fd, 28, 22, Math.min(fd.sz*0.75,18), 1, Math.PI/10);
+    } else {
+      octx.fillStyle="#555"; octx.font="22px Arial"; octx.textAlign="center"; octx.textBaseline="middle";
+      octx.fillText("?",28,22);
+    }
+    card.appendChild(oc);
+    var n = document.createElement("div"); n.className="fn"; n.textContent = got?fd.name:"???"; card.appendChild(n);
+    var p = document.createElement("div"); p.className="fp"; p.textContent = got?fd.pts+"pts":"~"+fd.dep+"m"; card.appendChild(p);
+    grid.appendChild(card);
+  }
+  document.getElementById("colSub").textContent = G.nCaught + "/100 caught";
+}
+
+document.getElementById("colBtn").addEventListener("click", function() {
+  buildCol();
+  document.getElementById("colModal").classList.add("open");
+});
+document.getElementById("closeCol").addEventListener("click", function() {
+  document.getElementById("colModal").classList.remove("open");
+});
+
+// ---- NEW GAME ----
+function newGame() {
+  G.score=0; G.depth=0; G.maxDep=0; G.camDep=0;
+  G.hs=0; lsSet("dfhs", 0);
+  G.phase="idle"; G.fishes=[]; G.parts=[]; G.bubbles=[];
+  G.caught={}; G.nCaught=0; G.spawnT=0; G.mdir=0; G.catchT=0;
+  document.getElementById("sc").textContent="0";
+  document.getElementById("fc2").textContent="0";
+  document.getElementById("hsv").textContent="0";
+  document.getElementById("hint").style.opacity="1";
+}
+document.getElementById("ngBtn").addEventListener("click", newGame);
+
+// ---- START ----
+document.getElementById("startBtn").addEventListener("click", function() {
+  document.getElementById("start").style.display = "none";
+  document.getElementById("hsv").textContent = G.hs;
+  G.waterY = H * WRAT;
+  G.boatX  = W * 0.38;
+  G.bx     = G.boatX + 42;
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

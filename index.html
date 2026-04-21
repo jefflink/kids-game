@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎮 Kids Game Zone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0b1e;
+      --surface:   #1a1733;
+      --border:    #2e2a50;
+      --yellow:    #ffe94a;
+      --pink:      #ff5fa0;
+      --cyan:      #3df0e0;
+      --green:     #5dfc8a;
+      --orange:    #ff8c42;
+      --purple:    #c084fc;
+      --white:     #f0ecff;
+      --text-muted:#8b86b8;
+      --radius:    20px;
+      --card-w:    260px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Starfield background ──────────────────────── */
+    #stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: white;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+      opacity: 0;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50%       { opacity: var(--bright, 0.8); transform: scale(1); }
+    }
+
+    /* ── Layout wrapper ───────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── Hero header ──────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 64px 0 48px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      color: #0d0b1e;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-6px); }
+    }
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2.8rem, 8vw, 5rem);
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, var(--yellow) 0%, var(--pink) 50%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      margin-top: 16px;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .subtitle span {
+      color: var(--cyan);
+    }
+
+    /* ── Decorative wiggle divider ────────────────── */
+    .wiggle {
+      width: 100%;
+      height: 24px;
+      margin: 0 auto 48px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      align-items: center;
+    }
+    .wiggle-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: bounce-dot 1.4s ease-in-out infinite;
+    }
+    .wiggle-dot:nth-child(1) { background: var(--yellow); animation-delay: 0s; }
+    .wiggle-dot:nth-child(2) { background: var(--pink);   animation-delay: 0.15s; }
+    .wiggle-dot:nth-child(3) { background: var(--cyan);   animation-delay: 0.3s; }
+    .wiggle-dot:nth-child(4) { background: var(--green);  animation-delay: 0.45s; }
+    .wiggle-dot:nth-child(5) { background: var(--orange); animation-delay: 0.6s; }
+    .wiggle-dot:nth-child(6) { background: var(--purple); animation-delay: 0.75s; }
+    @keyframes bounce-dot {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-8px) scale(1.2); }
+    }
+
+    /* ── Game grid ────────────────────────────────── */
+    #game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+      gap: 28px;
+    }
+
+    /* ── Game card ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  border-color 0.2s ease,
+                  box-shadow 0.25s ease;
+      position: relative;
+      cursor: pointer;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, var(--accent-a, var(--yellow)), var(--accent-b, var(--pink)));
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      z-index: 0;
+    }
+    .card:hover {
+      transform: translateY(-8px) rotate(-1deg) scale(1.02);
+      border-color: var(--accent-a, var(--yellow));
+      box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5),
+                  0 0 30px -5px var(--accent-glow, rgba(255,233,74,0.3));
+    }
+    .card:hover::before { opacity: 0.05; }
+
+    /* Accent palette cycling */
+    .card:nth-child(6n+1) { --accent-a: var(--yellow); --accent-b: var(--orange); --accent-glow: rgba(255,233,74,0.3); }
+    .card:nth-child(6n+2) { --accent-a: var(--pink);   --accent-b: var(--purple); --accent-glow: rgba(255,95,160,0.3); }
+    .card:nth-child(6n+3) { --accent-a: var(--cyan);   --accent-b: var(--green);  --accent-glow: rgba(61,240,224,0.3); }
+    .card:nth-child(6n+4) { --accent-a: var(--green);  --accent-b: var(--cyan);   --accent-glow: rgba(93,252,138,0.3); }
+    .card:nth-child(6n+5) { --accent-a: var(--orange); --accent-b: var(--yellow); --accent-glow: rgba(255,140,66,0.3); }
+    .card:nth-child(6n+6) { --accent-a: var(--purple); --accent-b: var(--pink);   --accent-glow: rgba(192,132,252,0.3); }
+
+    /* Cover image area */
+    .card-cover {
+      position: relative;
+      width: 100%;
+      padding-top: 66%;   /* 3:2 aspect ratio */
+      background: #111028;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .card-cover img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+    }
+    .card:hover .card-cover img {
+      transform: scale(1.06);
+    }
+    /* Fallback emoji cover shown when image missing */
+    .card-cover-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      background: linear-gradient(135deg, #1a1733, #0d1530);
+    }
+    .card-cover img.loaded + .card-cover-fallback,
+    .card-cover img:not(.errored) + .card-cover-fallback { display: none; }
+
+    /* Play badge */
+    .play-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--accent-a, var(--yellow));
+      color: #0d0b1e;
+      border-radius: 999px;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: scale(0.5);
+      transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 2;
+    }
+    .card:hover .play-badge {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Card body */
+    .card-body {
+      padding: 18px 18px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .card-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.35rem;
+      letter-spacing: 0.01em;
+      color: var(--white);
+      line-height: 1.2;
+    }
+    .card-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .card-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: var(--accent-a, var(--yellow));
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: gap 0.2s ease;
+    }
+    .card:hover .card-cta { gap: 10px; }
+    .card-cta svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── Loading / Error states ───────────────────── */
+    #loading-state, #error-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+      display: none;
+    }
+    #loading-state.visible, #error-state.visible { display: block; }
+    #loading-state .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Empty state ──────────────────────────────── */
+    #empty-state {
+      display: none;
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+    #empty-state.visible { display: block; }
+    #empty-state .big-emoji { font-size: 4rem; margin-bottom: 16px; }
+
+    /* ── Footer ───────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 40px 0 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      position: relative;
+      z-index: 1;
+    }
+    footer a { color: var(--cyan); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Entrance animations ──────────────────────── */
+    .card {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes card-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ───────────────────────────────── */
+    @media (max-width: 480px) {
+      :root { --card-w: 100%; }
+      header { padding: 40px 0 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Starfield -->
+  <div id="stars" aria-hidden="true"></div>
+
+  <div class="page">
+    <header>
+      <div class="hero-badge">✨ Free to Play</div>
+      <h1>Kids Game Zone</h1>
+      <p class="subtitle">Pick a game and start playing — <span>adventures await!</span> 🚀</p>
+    </header>
+
+    <div class="wiggle" aria-hidden="true">
+      <div class="wiggle-dot"></div>
+      <div class="wiggle-dot"></div>
+      <div class="wiggle-dot"></div>
+      <div class="wiggle-dot"></div>
+      <div class="wiggle-dot"></div>
+      <div class="wiggle-dot"></div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-state" class="visible" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Loading games…</p>
+    </div>
+
+    <!-- Error -->
+    <div id="error-state" role="alert">
+      <p>😬 Couldn't load games. Make sure <code>games.json</code> is in the same folder as this page.</p>
+    </div>
+
+    <!-- Empty -->
+    <div id="empty-state">
+      <div class="big-emoji">🎮</div>
+      <p>No games found yet. Add entries to <code>games.json</code> to get started!</p>
+    </div>
+
+    <!-- Game grid -->
+    <main id="game-grid" aria-label="Available games"></main>
+
+    <footer>
+      <p>Made with ❤️ for little adventurers &nbsp;·&nbsp; <a href="https://pages.github.com/" target="_blank" rel="noopener">Hosted on GitHub Pages</a></p>
+    </footer>
+  </div>
+
+  <script>
+    /* ── Starfield generator ─────────────────────── */
+    (function buildStars() {
+      const container = document.getElementById('stars');
+      const count = 90;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.5 + 0.8;
+        s.style.cssText = `
+          left: ${Math.random() * 100}%;
+          top: ${Math.random() * 100}%;
+          width: ${size}px;
+          height: ${size}px;
+          --dur: ${(Math.random() * 4 + 2).toFixed(1)}s;
+          --delay: ${(Math.random() * 5).toFixed(1)}s;
+          --bright: ${(Math.random() * 0.5 + 0.3).toFixed(2)};
+        `;
+        container.appendChild(s);
+      }
+    })();
+
+    /* ── Load and render games ───────────────────── */
+    async function loadGames() {
+      const grid    = document.getElementById('game-grid');
+      const loading = document.getElementById('loading-state');
+      const errorEl = document.getElementById('error-state');
+      const emptyEl = document.getElementById('empty-state');
+
+      try {
+        const res = await fetch('./games.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const games = await res.json();
+
+        loading.classList.remove('visible');
+
+        if (!Array.isArray(games) || games.length === 0) {
+          emptyEl.classList.add('visible');
+          return;
+        }
+
+        games.forEach((game, idx) => {
+          const card = buildCard(game, idx);
+          grid.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error('Failed to load games.json:', err);
+        loading.classList.remove('visible');
+        errorEl.classList.add('visible');
+      }
+    }
+
+    /**
+     * Build a game card element.
+     * @param {{ id: string, title: string, description?: string, emoji?: string }} game
+     * @param {number} idx  - position index for staggered animation delay
+     */
+    function buildCard(game, idx) {
+      const href  = `./data/${game.id}/main.html`;
+      const cover = `./data/${game.id}/cover.png`;
+      const emoji = game.emoji || '🎮';
+
+      const a = document.createElement('a');
+      a.className   = 'card';
+      a.href        = href;
+      a.style.animationDelay = `${idx * 80}ms`;
+      a.setAttribute('aria-label', `Play ${game.title}`);
+
+      a.innerHTML = `
+        <div class="card-cover">
+          <img
+            src="${cover}"
+            alt="${game.title} cover art"
+            loading="lazy"
+          />
+          <div class="card-cover-fallback" aria-hidden="true">${emoji}</div>
+          <div class="play-badge" aria-hidden="true">▶</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">${game.title}</div>
+          ${game.description
+            ? `<div class="card-desc">${game.description}</div>`
+            : ''}
+          <div class="card-cta">
+            Play now
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M3 8a.5.5 0 0 1 .5-.5h7.793L9.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L11.293 8.5H3.5A.5.5 0 0 1 3 8z"/>
+            </svg>
+          </div>
+        </div>
+      `;
+
+      // Handle missing cover image — show emoji fallback gracefully
+      const img = a.querySelector('img');
+      img.addEventListener('load',  () => img.classList.add('loaded'));
+      img.addEventListener('error', () => img.classList.add('errored'));
+
+      return a;
+    }
+
+    loadGames();
+  </script>
+</body>
+</html>

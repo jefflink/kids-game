@@ -109,33 +109,6 @@
       color: var(--cyan);
     }
 
-    /* ── Decorative wiggle divider ────────────────── */
-    .wiggle {
-      width: 100%;
-      height: 24px;
-      margin: 0 auto 48px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      align-items: center;
-    }
-    .wiggle-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      animation: bounce-dot 1.4s ease-in-out infinite;
-    }
-    .wiggle-dot:nth-child(1) { background: var(--yellow); animation-delay: 0s; }
-    .wiggle-dot:nth-child(2) { background: var(--pink);   animation-delay: 0.15s; }
-    .wiggle-dot:nth-child(3) { background: var(--cyan);   animation-delay: 0.3s; }
-    .wiggle-dot:nth-child(4) { background: var(--green);  animation-delay: 0.45s; }
-    .wiggle-dot:nth-child(5) { background: var(--orange); animation-delay: 0.6s; }
-    .wiggle-dot:nth-child(6) { background: var(--purple); animation-delay: 0.75s; }
-    @keyframes bounce-dot {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50%       { transform: translateY(-8px) scale(1.2); }
-    }
-
     /* ── Game grid ────────────────────────────────── */
     #game-grid {
       display: grid;
@@ -349,17 +322,8 @@
     <header>
       <div class="hero-badge">✨ Free to Play</div>
       <h1>Kids Game Zone</h1>
-      <p class="subtitle">Pick a game and start playing — <span>adventures await!</span> 🚀</p>
+      <p class="subtitle"><span>Made with ❤️ for little adventurers</span></p>
     </header>
-
-    <div class="wiggle" aria-hidden="true">
-      <div class="wiggle-dot"></div>
-      <div class="wiggle-dot"></div>
-      <div class="wiggle-dot"></div>
-      <div class="wiggle-dot"></div>
-      <div class="wiggle-dot"></div>
-      <div class="wiggle-dot"></div>
-    </div>
 
     <!-- Loading -->
     <div id="loading-state" class="visible" role="status" aria-live="polite">
@@ -382,7 +346,7 @@
     <main id="game-grid" aria-label="Available games"></main>
 
     <footer>
-      <p>Made with ❤️ for little adventurers &nbsp;·&nbsp; <a href="https://pages.github.com/" target="_blank" rel="noopener">Hosted on GitHub Pages</a></p>
+      <p><a href="https://pages.github.com/" target="_blank" rel="noopener">Hosted on GitHub Pages</a></p>
     </footer>
   </div>
 

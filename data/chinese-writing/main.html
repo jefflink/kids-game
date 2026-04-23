@@ -3,15 +3,23 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Hanzi Recognition Engine v4</title>
+<title>Learn Chinese Characters</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{min-height:100%}
-body{background:#0c0a1e;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;color:#f0e6ff}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(167,139,250,.3);border-radius:3px}
+body{
+  background: #fff9f0;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #2d2d2d;
+}
+@keyframes pop{from{opacity:0;transform:scale(0.82) translateY(-8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes wiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+::-webkit-scrollbar{height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,150,50,0.3);border-radius:2px}
 </style>
 </head>
 <body>
@@ -903,84 +911,70 @@ window.HanziEngine = { recognize };
 <!-- React UI — only this block needs Babel -->
 <script type="text/babel">
 const {useState,useRef,useEffect,useCallback}=React;
-const COLORS=["#a78bfa","#60a5fa","#34d399","#f472b6","#fb923c","#facc15","#a3e635","#38bdf8"];
 
-// ── Canvas: touch-scroll fix + drawing ───────────────────────────────────────
-// Key mobile fix: we block ALL touch events on the canvas element itself via
-// CSS touch-action:none AND call e.preventDefault() in passive:false listeners
-// attached directly to the DOM node (React synthetic events can't set passive:false).
+const COLORS=["#ff6b6b","#4ecdc4","#45b7d1","#f9ca24","#ff9f43","#a29bfe","#fd79a8","#00b894"];
+
 function Canvas({strokes,onChange}){
   const ref=useRef(); const drawing=useRef(false); const cur=useRef([]);
-  // dpr: device pixel ratio (2 on retina/HiDPI, 1 on standard)
   const dpr=useRef(window.devicePixelRatio||1);
 
-  // Resize canvas internal resolution to match its CSS size × dpr
   const resize=useCallback(()=>{
     const cv=ref.current; if(!cv)return;
     const r=cv.getBoundingClientRect();
-    const d=window.devicePixelRatio||1;
-    dpr.current=d;
+    const d=window.devicePixelRatio||1; dpr.current=d;
     if(cv.width!==Math.round(r.width*d)||cv.height!==Math.round(r.height*d)){
-      cv.width =Math.round(r.width *d);
-      cv.height=Math.round(r.height*d);
+      cv.width=Math.round(r.width*d); cv.height=Math.round(r.height*d);
     }
   },[]);
 
   const getPos=(e,cv)=>{
-    const r=cv.getBoundingClientRect();
-    const d=dpr.current;
+    const r=cv.getBoundingClientRect(),d=dpr.current;
     const s=e.touches?e.touches[0]:e;
-    // coords in canvas pixels (already scaled by dpr via width/height)
     return [(s.clientX-r.left)*d,(s.clientY-r.top)*d];
   };
 
   const redraw=useCallback(()=>{
     const cv=ref.current; if(!cv)return;
-    resize(); // ensure size is current
+    resize();
     const ctx=cv.getContext('2d');
-    const W=cv.width, H=cv.height;
+    const W=cv.width,H=cv.height;
     ctx.clearRect(0,0,W,H);
-    // Grid guides
     ctx.save();
-    ctx.strokeStyle='rgba(180,160,240,0.13)';ctx.lineWidth=1;ctx.setLineDash([5,5]);
+    ctx.strokeStyle='rgba(0,0,0,0.06)';ctx.lineWidth=1;ctx.setLineDash([6,6]);
     ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);
     ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
-    ctx.strokeStyle='rgba(180,160,240,0.06)';ctx.setLineDash([]);ctx.beginPath();
-    ctx.moveTo(0,0);ctx.lineTo(W,H);
+    ctx.strokeStyle='rgba(0,0,0,0.03)';ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,H);
     ctx.moveTo(W,0);ctx.lineTo(0,H);ctx.stroke();ctx.restore();
-    // Completed strokes
     strokes.forEach((s,i)=>{
       if(s.length<2)return;
-      ctx.beginPath();ctx.strokeStyle=COLORS[i%COLORS.length];
-      ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';
+      const col=COLORS[i%COLORS.length];
+      ctx.shadowColor='rgba(0,0,0,0.15)';ctx.shadowBlur=4;ctx.shadowOffsetY=2;
+      ctx.beginPath();ctx.strokeStyle=col;
+      ctx.lineWidth=8;ctx.lineCap='round';ctx.lineJoin='round';
       ctx.moveTo(s[0][0],s[0][1]);s.forEach(([x,y])=>ctx.lineTo(x,y));ctx.stroke();
-      // Stroke number badge
-      const R=11;
-      ctx.fillStyle=COLORS[i%COLORS.length];ctx.beginPath();
-      ctx.arc(s[0][0],s[0][1],R,0,TAU);ctx.fill();
-      ctx.fillStyle='#fff';ctx.font=`bold ${R+1}px sans-serif`;
+      ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+      const R=16;
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(s[0][0],s[0][1],R,0,TAU);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font=`bold ${R+2}px sans-serif`;
       ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,s[0][0],s[0][1]);
     });
-    // Live stroke
     if(cur.current.length>1){
-      ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,0.9)';
-      ctx.lineWidth=3.5;ctx.lineCap='round';
+      ctx.beginPath();ctx.strokeStyle='#ff6b6b';
+      ctx.lineWidth=8;ctx.lineCap='round';
       ctx.moveTo(cur.current[0][0],cur.current[0][1]);
       cur.current.forEach(([x,y])=>ctx.lineTo(x,y));ctx.stroke();
     }
   },[strokes,resize]);
 
-  // Initial size + watch for layout changes (window resize, orientation change)
   useEffect(()=>{
     resize();
-    const ro=new ResizeObserver(()=>{ resize(); redraw(); });
+    const ro=new ResizeObserver(()=>{resize();redraw();});
     if(ref.current) ro.observe(ref.current);
     return()=>ro.disconnect();
   },[resize,redraw]);
-
   useEffect(redraw,[strokes,redraw]);
 
-  // Attach touch listeners directly with passive:false so preventDefault() works
   useEffect(()=>{
     const cv=ref.current; if(!cv)return;
     const onTD=e=>{e.preventDefault();drawing.current=true;cur.current=[getPos(e,cv)];redraw();};
@@ -991,16 +985,15 @@ function Canvas({strokes,onChange}){
       cur.current=[];redraw();
     };
     cv.addEventListener('touchstart',onTD,{passive:false});
-    cv.addEventListener('touchmove', onTM,{passive:false});
-    cv.addEventListener('touchend',  onTU,{passive:false});
+    cv.addEventListener('touchmove',onTM,{passive:false});
+    cv.addEventListener('touchend',onTU,{passive:false});
     return()=>{
       cv.removeEventListener('touchstart',onTD);
-      cv.removeEventListener('touchmove', onTM);
-      cv.removeEventListener('touchend',  onTU);
+      cv.removeEventListener('touchmove',onTM);
+      cv.removeEventListener('touchend',onTU);
     };
   },[strokes,onChange,redraw]);
 
-  // Mouse handlers via React (no passive issue on desktop)
   const onMD=e=>{drawing.current=true;cur.current=[getPos(e,ref.current)];redraw();};
   const onMM=e=>{if(!drawing.current)return;cur.current.push(getPos(e,ref.current));redraw();};
   const onMU=e=>{
@@ -1012,18 +1005,16 @@ function Canvas({strokes,onChange}){
   return <canvas ref={ref}
     onMouseDown={onMD} onMouseMove={onMM} onMouseUp={onMU} onMouseLeave={onMU}
     style={{touchAction:'none',cursor:'crosshair',display:'block',
-            width:'100%',height:'100%',borderRadius:14,userSelect:'none'}}/>;
+            width:'100%',height:'100%',borderRadius:16,userSelect:'none'}}/>;
 }
 
-// ── Confidence bar ────────────────────────────────────────────────────────────
-function Bar({v}){
-  return <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,0.1)',overflow:'hidden',width:'100%'}}>
-    <div style={{height:'100%',borderRadius:2,width:`${Math.round(v*100)}%`,
-      background:'linear-gradient(90deg,#7c3aed,#34d399)',transition:'width 0.4s'}}/>
+function Bar({v,color='#ff9f43'}){
+  return <div style={{height:6,borderRadius:3,background:'rgba(0,0,0,0.08)',overflow:'hidden',width:'100%'}}>
+    <div style={{height:'100%',borderRadius:3,width:`${Math.round(v*100)}%`,
+      background:color,transition:'width 0.4s ease'}}/>
   </div>;
 }
 
-// ── Main App ──────────────────────────────────────────────────────────────────
 function App(){
   const [strokes,setStrokes]=useState([]);
   const [results,setResults]=useState([]);
@@ -1037,131 +1028,156 @@ function App(){
   const undo=()=>{const s=strokes.slice(0,-1);setStrokes(s);setSel(null);setResults(s.length?window.HanziEngine.recognize(s,8):[]);};
   const clear=()=>{setStrokes([]);setResults([]);setSel(null);};
   const top=results[0];
-
-  const card={background:'rgba(255,255,255,0.04)',border:'1px solid rgba(167,139,250,0.18)',borderRadius:18,padding:14};
-  const smBtn=(r,g,b,dis)=>({
-    border:`1px solid rgba(${r},${g},${b},0.3)`,background:`rgba(${r},${g},${b},0.08)`,
-    borderRadius:8,padding:'6px 16px',fontSize:13,fontWeight:600,
-    cursor:dis?'not-allowed':'pointer',color:`rgb(${r},${g},${b})`,
-    opacity:dis?0.3:1,transition:'opacity 0.15s',WebkitTapHighlightColor:'transparent'
-  });
+  const scoreColor=v=>v>=0.7?'#00b894':v>=0.4?'#e67e22':'#e74c3c';
 
   return (
-    <div style={{minHeight:'100vh',background:'linear-gradient(135deg,#0f0c29,#1a1040 55%,#0d1b2a)',
+    <div style={{
+      minHeight:'100vh',
+      background:'linear-gradient(160deg,#fff9f0 0%,#ffeef8 50%,#eef6ff 100%)',
       display:'flex',flexDirection:'column',alignItems:'center',
-      padding:'16px 12px 40px',overflowX:'hidden'}}>
+      padding:'16px 14px 40px',overflowX:'hidden'
+    }}>
 
-      {/* Header — compact on mobile */}
-      <div style={{textAlign:'center',marginBottom:16}}>
-        <h1 style={{margin:'0 0 2px',fontSize:'clamp(18px,4.5vw,26px)',fontWeight:800,
-          background:'linear-gradient(90deg,#a78bfa,#60a5fa,#34d399)',
-          WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',lineHeight:1.2}}>
-          Chinese Handwriting
-        </h1>
-        <p style={{color:'#6b7280',fontSize:11,margin:0}}>汉字识别 · HSK 1–4 · 701 characters</p>
+      <div style={{textAlign:'center',marginBottom:14}}>
+        <div style={{fontSize:20,marginBottom:4,letterSpacing:4}}>⭐🌟⭐</div>
+        <h1 style={{
+          margin:'0 0 2px',
+          fontSize:'clamp(22px,6vw,34px)',fontWeight:900,
+          background:'linear-gradient(135deg,#ff6b6b,#f9ca24,#4ecdc4)',
+          WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',
+          letterSpacing:'-0.5px',lineHeight:1.1
+        }}>写汉字！</h1>
+        <p style={{color:'#b0a0c8',fontSize:12,margin:0,fontWeight:500}}>
+          Learn to write Chinese · HSK 1–4 · 701 characters
+        </p>
       </div>
 
-      {/* Full-width canvas */}
-      <div style={{width:'100%',maxWidth:680}}>
+      <div style={{
+        width:'100%',maxWidth:560,
+        background:'#fff',borderRadius:24,
+        boxShadow:'0 8px 40px rgba(0,0,0,0.10),0 2px 8px rgba(0,0,0,0.06)',
+        overflow:'hidden'
+      }}>
+        {/* Canvas */}
         <div style={{
-          position:'relative',
-          width:'100%', paddingBottom:'100%',  /* square aspect ratio */
-          background:'rgba(6,3,20,0.9)',
-          borderRadius:14, border:'2px solid rgba(167,139,250,0.3)', overflow:'hidden'
+          position:'relative',width:'100%',paddingBottom:'75%',
+          background:'#fffdf9',borderBottom:'2px dashed #ffe4c4'
         }}>
+          {['tl','tr','bl','br'].map(p=>(
+            <div key={p} style={{
+              position:'absolute',
+              top:p[0]==='t'?10:'auto',bottom:p[0]==='b'?10:'auto',
+              left:p[1]==='l'?10:'auto',right:p[1]==='r'?10:'auto',
+              width:8,height:8,borderRadius:'50%',background:'rgba(255,180,100,0.3)'
+            }}/>
+          ))}
           <div style={{position:'absolute',inset:0}}>
             <Canvas strokes={strokes} onChange={onChange}/>
           </div>
         </div>
 
-        {/* Controls row — sits flush under canvas */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-          marginTop:8,paddingLeft:2,paddingRight:2}}>
-          <span style={{fontSize:11,color:'#6b7280'}}>
-            {strokes.length} stroke{strokes.length!==1?'s':''}
+        {/* Controls */}
+        <div style={{
+          display:'flex',justifyContent:'space-between',alignItems:'center',
+          padding:'10px 16px',background:'#fff8f0',borderBottom:'1px solid #ffeedd'
+        }}>
+          <span style={{fontSize:12,color:'#c9a882',fontWeight:600}}>
+            {strokes.length===0?'✏️  Start drawing!':`✏️  ${strokes.length} stroke${strokes.length!==1?'s':''}`}
           </span>
           <div style={{display:'flex',gap:8}}>
-            <button onClick={undo} disabled={!strokes.length}
-              style={smBtn(167,139,250,!strokes.length)}>↩ Undo</button>
-            <button onClick={clear} disabled={!strokes.length}
-              style={smBtn(239,68,68,!strokes.length)}>✕ Clear</button>
+            <button onClick={undo} disabled={!strokes.length} style={{
+              border:'2px solid #ffc3a0',background:strokes.length?'#fff4ee':'#fafafa',
+              borderRadius:20,padding:'5px 14px',fontSize:12,fontWeight:700,
+              cursor:strokes.length?'pointer':'not-allowed',
+              color:strokes.length?'#ff7043':'#ccc',opacity:strokes.length?1:0.5,
+              transition:'all 0.15s',WebkitTapHighlightColor:'transparent'
+            }}>↩ Undo</button>
+            <button onClick={clear} disabled={!strokes.length} style={{
+              border:'2px solid #ffb3c1',background:strokes.length?'#fff0f3':'#fafafa',
+              borderRadius:20,padding:'5px 14px',fontSize:12,fontWeight:700,
+              cursor:strokes.length?'pointer':'not-allowed',
+              color:strokes.length?'#e84393':'#ccc',opacity:strokes.length?1:0.5,
+              transition:'all 0.15s',WebkitTapHighlightColor:'transparent'
+            }}>✕ Clear</button>
           </div>
         </div>
 
-        {/* ── Results row — one horizontal strip below canvas ── */}
-        <div style={{marginTop:10,minHeight:64}}>
+        {/* Results */}
+        <div style={{padding:'12px 16px 16px'}}>
           {!top
-            ? <div style={{textAlign:'center',padding:'14px',color:'#4b5563',fontSize:13}}>
-                ✍️ Draw a character to recognise it
+            ? <div style={{textAlign:'center',padding:'16px 0',color:'#d4b896'}}>
+                <div style={{fontSize:32,marginBottom:6,animation:'float 2s ease-in-out infinite'}}>🖊️</div>
+                <div style={{fontSize:14,fontWeight:600}}>Draw a character above!</div>
+                <div style={{fontSize:11,marginTop:3,color:'#e0c8ac'}}>Try: 一 二 三 人 山 水 火 木</div>
               </div>
             : <>
-                {/* Best match — single horizontal pill */}
                 <div key={animKey} style={{
-                  display:'flex', alignItems:'center', gap:10,
-                  background:'linear-gradient(135deg,rgba(124,58,237,0.18),rgba(79,70,229,0.1))',
-                  border:'1px solid rgba(167,139,250,0.35)',
-                  borderRadius:12, padding:'8px 14px',
-                  animation:'pop 0.25s cubic-bezier(.34,1.56,.64,1)'}}>
-                  {/* Character */}
-                  <div style={{fontSize:44,lineHeight:1,fontWeight:900,flexShrink:0,
-                    background:'linear-gradient(135deg,#f0e6ff,#a78bfa)',
-                    WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',userSelect:'none'}}>
-                    {top.char}
-                  </div>
-                  {/* Pinyin + meaning */}
+                  display:'flex',alignItems:'center',gap:12,
+                  background:'linear-gradient(135deg,#fff9f0,#fff0fb)',
+                  border:'2.5px solid #ffd6e7',borderRadius:18,padding:'10px 16px',
+                  boxShadow:'0 4px 16px rgba(255,150,100,0.12)',
+                  animation:'pop 0.3s cubic-bezier(.34,1.56,.64,1)'}}>
+                  <div style={{
+                    fontSize:56,lineHeight:1,fontWeight:900,flexShrink:0,
+                    color:'#2d2d2d',textShadow:'3px 3px 0 rgba(255,150,50,0.2)',
+                    userSelect:'none',animation:'wiggle 0.4s ease'
+                  }}>{top.char}</div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:16,color:'#60a5fa',fontWeight:700,lineHeight:1.1}}>
-                      {top.pinyin}
-                      <span style={{fontSize:9,color:'#7c3aed',marginLeft:6,fontWeight:400}}>HSK {top.hsk}</span>
+                    <div style={{display:'flex',alignItems:'baseline',gap:8,flexWrap:'wrap'}}>
+                      <span style={{fontSize:20,fontWeight:800,color:'#ff6b6b',lineHeight:1}}>{top.pinyin}</span>
+                      <span style={{fontSize:10,fontWeight:700,color:'#fff',
+                        background:'#a29bfe',borderRadius:8,padding:'1px 7px'}}>HSK {top.hsk}</span>
                     </div>
-                    <div style={{fontSize:11,color:'#9ca3af',marginTop:1,overflow:'hidden',
-                      whiteSpace:'nowrap',textOverflow:'ellipsis'}}>
-                      {top.meaning}
+                    <div style={{fontSize:13,color:'#666',marginTop:3,
+                      overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{top.meaning}</div>
+                    <div style={{marginTop:6,display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{flex:1}}><Bar v={top.score} color={scoreColor(top.score)}/></div>
+                      <span style={{fontSize:12,fontWeight:700,color:scoreColor(top.score),flexShrink:0}}>
+                        {Math.round(top.score*100)}%
+                      </span>
                     </div>
-                  </div>
-                  {/* Confidence */}
-                  <div style={{flexShrink:0,textAlign:'right'}}>
-                    <div style={{fontSize:16,fontWeight:700,color:'#34d399'}}>
-                      {Math.round(top.score*100)}%
-                    </div>
-                    <Bar v={top.score}/>
                   </div>
                 </div>
 
-                {/* Other candidates — horizontal scrollable row of chips */}
                 {results.length>1 &&
-                  <div style={{display:'flex',gap:6,marginTop:8,overflowX:'auto',
+                  <div style={{display:'flex',gap:7,marginTop:10,overflowX:'auto',
                     paddingBottom:4,WebkitOverflowScrolling:'touch'}}>
-                    {results.slice(1).map((r,i)=>
-                      <button key={i} onClick={()=>setSel(sel?.char===r.char?null:r)}
-                        style={{
-                          flexShrink:0,
-                          display:'flex',alignItems:'center',gap:6,
-                          background:sel?.char===r.char?'rgba(124,58,237,0.3)':'rgba(255,255,255,0.05)',
-                          border:`1px solid ${sel?.char===r.char?'rgba(167,139,250,0.6)':'rgba(255,255,255,0.1)'}`,
-                          borderRadius:20,padding:'4px 10px 4px 6px',
-                          cursor:'pointer',transition:'all 0.12s',
+                    {results.slice(1).map((r,i)=>{
+                      const active=sel?.char===r.char;
+                      return(
+                        <button key={i} onClick={()=>setSel(active?null:r)} style={{
+                          flexShrink:0,display:'flex',alignItems:'center',gap:6,
+                          background:active?'#fff0f8':'#f9f9f9',
+                          border:`2px solid ${active?'#fd79a8':'#eee'}`,
+                          borderRadius:20,padding:'5px 12px 5px 8px',
+                          cursor:'pointer',transition:'all 0.15s',
+                          boxShadow:active?'0 2px 8px rgba(253,121,168,0.25)':'none',
                           WebkitTapHighlightColor:'transparent'}}>
-                        <span style={{fontSize:22,color:'#e9d5ff',lineHeight:1}}>{r.char}</span>
-                        <span style={{fontSize:10,color:'#9ca3af',lineHeight:1.3}}>
-                          {r.pinyin}<br/>
-                          <span style={{color:'#6b7280'}}>{Math.round(r.score*100)}%</span>
-                        </span>
-                      </button>
-                    )}
+                          <span style={{fontSize:22,color:'#2d2d2d',lineHeight:1}}>{r.char}</span>
+                          <span style={{fontSize:10,color:'#999',lineHeight:1.4,textAlign:'left'}}>
+                            {r.pinyin}<br/>
+                            <span style={{color:scoreColor(r.score),fontWeight:700}}>{Math.round(r.score*100)}%</span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 }
 
-                {/* Tapped candidate detail */}
                 {sel &&
-                  <div style={{marginTop:6,padding:'6px 12px',
-                    background:'rgba(124,58,237,0.1)',borderRadius:8,
-                    border:'1px solid rgba(167,139,250,0.18)',
-                    fontSize:12,color:'#c4b5fd',display:'flex',alignItems:'center',gap:8}}>
-                    <strong style={{color:'#e9d5ff',fontSize:18}}>{sel.char}</strong>
-                    <span>{sel.pinyin}</span>
-                    <span style={{color:'#9ca3af'}}>{sel.meaning}</span>
-                    <span style={{color:'#7c3aed',fontSize:10,marginLeft:'auto'}}>HSK {sel.hsk}</span>
+                  <div style={{
+                    marginTop:8,padding:'8px 14px',background:'#fff5ff',borderRadius:12,
+                    border:'2px solid #e8d5ff',display:'flex',alignItems:'center',gap:10,
+                    animation:'pop 0.2s ease'}}>
+                    <span style={{fontSize:28,color:'#2d2d2d'}}>{sel.char}</span>
+                    <div>
+                      <span style={{fontSize:16,fontWeight:700,color:'#a29bfe'}}>{sel.pinyin}</span>
+                      <span style={{fontSize:11,color:'#888',marginLeft:8}}>{sel.meaning}</span>
+                    </div>
+                    <span style={{marginLeft:'auto',fontSize:10,fontWeight:700,color:'#fff',
+                      background:'#a29bfe',borderRadius:8,padding:'2px 8px',flexShrink:0}}>
+                      HSK {sel.hsk}
+                    </span>
                   </div>
                 }
               </>
@@ -1169,10 +1185,15 @@ function App(){
         </div>
       </div>
 
+      <div style={{marginTop:16,fontSize:11,color:'#d4c4b0',textAlign:'center'}}>
+        汉字识别引擎 · Stroke-based recognition · GitHub Pages ready
+      </div>
+
       <style>{`
         @keyframes pop{from{opacity:0;transform:scale(0.82) translateY(-8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        button:active{transform:scale(0.96)}
-        /* Prevent body scroll when finger is on canvas */
+        @keyframes wiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        button:active{transform:scale(0.94)}
         body{overscroll-behavior:none}
       `}</style>
     </div>

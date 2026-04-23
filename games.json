@@ -3,13 +3,19 @@
     "id": "fishing",
     "title": "Fishing Game",
     "description": "Catch as many fishes as you can!",
-    "emoji": "🫧"
+    "emoji": "🎣"
   },
   {
     "id": "spelling",
-    "title": "Learn Spelling",
-    "description": "Help kids learn spelling!",
-    "emoji": "🦕"
+    "title": "Learn Spelling & 听写",
+    "description": "Help kids learn spelling and 听写!",
+    "emoji": "🔡"
+  },
+  {
+    "id": "chinese-writing",
+    "title": "Learn to write Chinese words",
+    "description": "Help kids to learn writing Chinese. Strokes matters!",
+    "emoji": "✏️"
   },
   {
     "id": "tens-and-ones",

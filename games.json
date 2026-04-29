@@ -22,5 +22,17 @@
     "title": "Tens & Ones",
     "description": "Learn tens and ones interactively!",
     "emoji": "🎨"
+  },
+  {
+    "id": "pycrop",
+    "title": "Python Farming",
+    "description": "Learn to use Python to farm on your palm!",
+    "emoji": "🐍"
+  },
+  {
+    "id": "slinky",
+    "title": "Slinky Physics",
+    "description": "Have some slinky fun!",
+    "emoji": "➿"
   }
 ]

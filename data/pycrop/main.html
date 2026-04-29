@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>🌾 PyCrop</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#87CEEB;--sky2:#c5e8f7;
+  --grass:#5DBB63;--grass2:#4a9e50;
+  --soil2:#a07040;--soil3:#6B4226;
+  --gold:#F5C518;--gold2:#d4a017;
+  --panel:#fffdf5;--panel2:#f5eed8;
+  --border:#d4a96a;
+  --green:#27ae60;--red:#e74c3c;--blue:#2980b9;
+  --text:#3a2a1a;--muted:#9a8a72;
+  --shadow:rgba(60,30,0,.16);
+  /* block colours */
+  --b-loop:#3498db;--b-loop2:#2178b4;
+  --b-if:#9b59b6;--b-if2:#7d3f9a;
+  --b-plant:#27ae60;--b-plant2:#1e8449;
+  --b-harvest:#e67e22;--b-harvest2:#c0601a;
+  --b-var:#e74c3c;--b-var2:#c0392b;
+  --b-print:#16a085;--b-print2:#0e7062;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,var(--sky) 0%,var(--sky2) 34%,var(--grass) 34%,var(--grass2) 100%);min-height:100vh;color:var(--text);overflow-x:hidden;}
+
+/* clouds */
+.cloud{position:fixed;top:16px;pointer-events:none;opacity:.7;z-index:0;animation:drift linear infinite;font-size:34px;}
+.cloud:nth-child(1){left:3%;animation-duration:70s;}
+.cloud:nth-child(2){left:46%;animation-duration:90s;animation-delay:-30s;font-size:22px;}
+.cloud:nth-child(3){left:72%;animation-duration:54s;animation-delay:-16s;font-size:26px;}
+@keyframes drift{from{transform:translateX(-280px);}to{transform:translateX(116vw);}}
+
+#app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:5px 5px 30px;}
+
+/* ── HEADER ── */
+header{
+  background:var(--panel);border:3px solid var(--border);border-radius:14px;
+  padding:7px 11px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 4px 14px var(--shadow);margin-bottom:6px;gap:6px;flex-wrap:wrap;
+}
+.gtitle{font-family:'Fredoka One',cursive;font-size:22px;color:var(--soil3);letter-spacing:1px;text-shadow:2px 2px 0 var(--gold);}
+.hstats{display:flex;gap:5px;align-items:center;}
+.chip{background:var(--panel2);border:2px solid var(--border);border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:3px;white-space:nowrap;}
+.chip .ci{font-size:13px;}
+.chip .cv{font-family:'Fredoka One',cursive;font-size:14px;color:var(--soil3);}
+.chip.gc .cv{color:#9a6800;}
+.chip.sc .cv{color:var(--green);}
+#rbar-w{width:42px;height:6px;background:#ddd;border-radius:3px;overflow:hidden;}
+#rbar{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:3px;transition:width .4s;}
+
+/* ── SEEDS (under header) ── */
+.shop-wrap{
+  background:var(--panel);border:3px solid var(--border);border-radius:14px;
+  padding:6px 8px;box-shadow:0 4px 14px var(--shadow);margin-bottom:6px;
+}
+.seeds-row{display:flex;gap:4px;justify-content:space-between;}
+.sc{
+  flex:1;background:var(--panel2);border:2px solid var(--border);border-radius:8px;
+  padding:4px 2px;text-align:center;cursor:pointer;transition:all .14s;user-select:none;min-width:0;
+}
+.sc:hover,.sc.active{border-color:var(--green);background:#edfce8;box-shadow:0 0 6px rgba(39,174,96,.3);}
+.sc .se{font-size:clamp(16px,4vw,22px);line-height:1.2;}
+.sc .sn{font-size:clamp(7px,1.8vw,9px);font-weight:900;color:var(--text);margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sc .sc2{font-size:clamp(7px,1.8vw,9px);color:#9a6800;font-weight:700;}
+.sc .ss{font-size:clamp(7px,1.8vw,9px);color:var(--green);font-weight:700;}
+.sc .st{font-size:clamp(6px,1.6vw,8px);color:var(--muted);}
+.sc.active .sn{color:var(--green);}
+
+/* ── FARM ── */
+.farm-wrap{
+  background:var(--panel);border:3px solid var(--border);border-radius:14px;
+  padding:8px;box-shadow:0 4px 14px var(--shadow);margin-bottom:6px;
+}
+#farm-container{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.tile{
+  aspect-ratio:1;background:var(--soil2);border:3px solid var(--soil3);border-radius:7px;
+  position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:visible;transition:box-shadow .2s;
+}
+.tile::after{content:'';position:absolute;inset:0;border-radius:5px;background:repeating-linear-gradient(135deg,transparent,transparent 5px,rgba(0,0,0,.04) 5px,rgba(0,0,0,.04) 10px);pointer-events:none;}
+.tile.mature{border-color:var(--gold)!important;animation:tg 1.1s ease-in-out infinite;}
+@keyframes tg{0%,100%{box-shadow:0 0 5px 2px rgba(245,197,24,.3);}50%{box-shadow:0 0 15px 5px rgba(245,197,24,.6);}}
+.tnum{position:absolute;top:2px;left:3px;font-size:8px;color:rgba(255,255,255,.3);font-family:'Fredoka One',cursive;pointer-events:none;z-index:1;}
+.temoji{font-size:clamp(18px,5vw,26px);line-height:1;z-index:1;}
+.tstatus{font-size:8px;color:rgba(255,255,255,.7);font-family:'Fredoka One',cursive;z-index:1;margin-top:1px;text-align:center;}
+.tstatus.ripe{color:var(--gold);}
+.tprog{position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(0,0,0,.2);border-radius:0 0 5px 5px;overflow:hidden;}
+.tprog-f{height:100%;background:var(--green);transition:width .4s;border-radius:0 0 5px 5px;}
+
+/* farmer */
+#farmer{position:absolute;font-size:28px;line-height:1;text-align:center;pointer-events:none;z-index:10;transition:left .32s cubic-bezier(.4,1.4,.6,1),top .32s cubic-bezier(.4,1.4,.6,1);filter:drop-shadow(2px 3px 2px rgba(0,0,0,.28));transform:translate(-50%,-88%);}
+#farmer.working{animation:fw .36s ease-in-out;}
+@keyframes fw{0%,100%{transform:translate(-50%,-88%) rotate(0);}30%{transform:translate(-50%,-88%) rotate(-18deg) scale(1.1);}70%{transform:translate(-50%,-88%) rotate(18deg) scale(1.1);}}
+#fbubble{position:absolute;z-index:20;background:white;border:2px solid #555;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:800;color:#333;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .22s;transform:translate(-50%,-130%);}
+#fbubble::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#555;}
+
+/* ── CONTROL BAR ── */
+.ctrl-bar{
+  background:var(--panel);border:3px solid var(--border);border-radius:14px;
+  padding:8px 10px;box-shadow:0 4px 14px var(--shadow);
+  display:flex;gap:6px;align-items:stretch;
+}
+.cbtn{
+  font-family:'Fredoka One',cursive;font-size:16px;letter-spacing:.5px;
+  padding:10px 0;border:3px solid;border-radius:10px;cursor:pointer;
+  transition:all .14s;text-align:center;flex:1;
+  box-shadow:0 3px 0;
+}
+.cbtn:hover{transform:translateY(-2px);filter:brightness(1.08);}
+.cbtn:active{transform:translateY(1px);box-shadow:none;}
+.cbtn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.c-code {color:#fff;background:#5c6bc0;border-color:#3949ab;box-shadow:0 3px 0 #283593;}
+.c-run  {color:#fff;background:var(--green);border-color:#1e8449;box-shadow:0 3px 0 #145a32;}
+.c-pause{color:#fff;background:#e67e22;border-color:#ca6f1e;box-shadow:0 3px 0 #9c5418;}
+.c-step {color:var(--soil3);background:var(--gold);border-color:var(--gold2);box-shadow:0 3px 0 var(--gold2);}
+/* paused state — step button lights up */
+.cbtn.paused-active{animation:pulse-btn .8s ease-in-out infinite;}
+@keyframes pulse-btn{0%,100%{filter:brightness(1);}50%{filter:brightness(1.25);}}
+
+/* output log */
+#olog{background:#1e1e2e;border:2px solid #313244;border-radius:8px;height:58px;overflow-y:auto;padding:6px 9px;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;margin-top:6px;}
+.lo{color:#a6e3a1;}.le{color:#f38ba8;}.li{color:#89dceb;}.lg{color:var(--gold);}
+
+/* ── SPEED ── */
+.speed-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--muted);font-weight:700;}
+.speed-row input[type=range]{flex:1;accent-color:var(--green);height:6px;cursor:pointer;}
+.speed-lbl{font-family:'Fredoka One',cursive;font-size:15px;color:var(--soil3);min-width:38px;text-align:right;}
+
+/* ═══════════════════════════════════════
+   MODAL CODE EDITOR
+═══════════════════════════════════════ */
+#modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;
+  align-items:stretch;justify-content:center;padding:0;
+}
+#modal-overlay.show{display:flex;}
+#modal{
+  background:#1a1a2e;width:100%;max-width:700px;display:flex;flex-direction:column;
+  border-left:3px solid #3a3a5c;border-right:3px solid #3a3a5c;
+  overflow:hidden;
+}
+.modal-header{
+  background:#16213e;border-bottom:2px solid #3a3a5c;padding:10px 14px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.modal-title{font-family:'Fredoka One',cursive;font-size:18px;color:#a9b4f0;}
+.modal-close{font-size:22px;color:#888;cursor:pointer;padding:0 4px;line-height:1;}
+.modal-close:hover{color:#fff;}
+.modal-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* palette */
+#palette{
+  width:150px;flex-shrink:0;background:#0f3460;border-right:2px solid #3a3a5c;
+  overflow-y:auto;padding:8px 6px;
+  display:flex;flex-direction:column;gap:4px;
+}
+.pal-section{font-family:'Fredoka One',cursive;font-size:11px;color:#7a8cc0;padding:4px 2px 2px;letter-spacing:.5px;}
+.pblock{
+  padding:7px 8px;border-radius:8px;cursor:grab;user-select:none;
+  font-family:'Fredoka One',cursive;font-size:13px;color:#fff;
+  border:2px solid rgba(255,255,255,.15);transition:all .12s;
+  display:flex;align-items:center;gap:5px;line-height:1.2;
+}
+.pblock:hover{transform:scale(1.04);border-color:rgba(255,255,255,.4);}
+.pblock:active{cursor:grabbing;}
+.pblock .pi{font-size:15px;}
+.pb-loop   {background:var(--b-loop);}
+.pb-if     {background:var(--b-if);}
+.pb-plant  {background:var(--b-plant);}
+.pb-harvest{background:var(--b-harvest);}
+.pb-var    {background:var(--b-var);}
+.pb-print  {background:var(--b-print);}
+
+/* program canvas */
+#program-area{
+  flex:1;overflow-y:auto;padding:10px 8px;
+  display:flex;flex-direction:column;gap:0;
+  background:repeating-linear-gradient(180deg,#1a1a2e 0px,#1a1a2e 38px,#1e2040 38px,#1e2040 40px);
+  min-height:200px;
+}
+.program-empty{color:#3a4060;font-family:'Fredoka One',cursive;font-size:14px;text-align:center;margin-top:40px;pointer-events:none;}
+
+/* program blocks */
+.prog-block{
+  position:relative;border-radius:8px;margin-bottom:3px;cursor:default;
+  font-family:'Fredoka One',cursive;font-size:14px;color:#fff;
+  border:2px solid rgba(255,255,255,.2);
+  user-select:none;transition:box-shadow .12s;
+}
+.prog-block:hover{box-shadow:0 0 0 2px rgba(255,255,255,.4);}
+.prog-block.dragging-prog{opacity:.4;}
+
+.pb-head{
+  display:flex;align-items:center;gap:6px;padding:7px 8px;
+  border-radius:6px 6px 0 0;
+}
+.prog-block.flat .pb-head{border-radius:6px;}
+.pb-del{
+  margin-left:auto;font-size:14px;color:rgba(255,255,255,.5);cursor:pointer;
+  padding:0 3px;line-height:1;
+}
+.pb-del:hover{color:#fff;}
+
+/* inline inputs */
+.pb-input,.pb-select{
+  font-family:'Fredoka One',cursive;font-size:13px;
+  background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.35);
+  border-radius:5px;padding:1px 5px;width:44px;outline:none;
+}
+.pb-select{width:auto;max-width:90px;}
+.pb-input:focus,.pb-select:focus{background:rgba(255,255,255,.3);}
+.pb-select option{color:#000;}
+
+/* indent body for loops/if */
+.pb-body{
+  padding:3px 4px 3px 18px;
+  border-left:3px solid rgba(255,255,255,.25);
+  margin:0 8px 4px;
+  display:flex;flex-direction:column;gap:0;
+  min-height:30px;
+  border-radius:0 0 4px 4px;
+}
+.pb-body.drop-highlight{background:rgba(255,255,255,.07);border-left-color:rgba(255,255,255,.6);}
+.pb-add-child{
+  font-family:'Fredoka One',cursive;font-size:11px;color:rgba(255,255,255,.4);
+  padding:4px 6px;cursor:pointer;border-radius:4px;
+  border:1px dashed rgba(255,255,255,.2);text-align:center;margin:2px 0;
+}
+.pb-add-child:hover{color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.5);}
+
+/* drop zones */
+.drop-zone{
+  height:8px;border-radius:4px;transition:all .15s;margin:1px 0;
+}
+.drop-zone.active{height:18px;background:rgba(255,255,255,.15);border:2px dashed rgba(255,255,255,.5);}
+
+/* generated code preview */
+.modal-footer{
+  background:#0d1117;border-top:2px solid #3a3a5c;padding:8px 12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+#code-preview{
+  flex:1;font-family:'Courier New',monospace;font-size:11px;color:#7ee787;
+  overflow-x:auto;white-space:pre;max-height:52px;overflow-y:auto;
+}
+.modal-done{
+  font-family:'Fredoka One',cursive;font-size:15px;padding:8px 18px;
+  background:var(--green);color:#fff;border:2px solid #1e8449;border-radius:8px;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+.modal-done:hover{background:#1e8449;}
+.modal-clear{font-family:'Fredoka One',cursive;font-size:13px;padding:6px 12px;background:rgba(255,255,255,.08);color:#888;border:1px solid #444;border-radius:6px;cursor:pointer;flex-shrink:0;}
+.modal-clear:hover{color:#fff;border-color:#888;}
+
+/* harvest pop */
+.hpop{position:fixed;pointer-events:none;z-index:999;font-family:'Fredoka One',cursive;font-size:13px;color:var(--gold);text-shadow:1px 1px 0 #000;animation:hpop 1.2s ease-out forwards;}
+@keyframes hpop{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-65px) scale(1.4);}}
+
+/* game over */
+#gover{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center;}
+#gover.show{display:flex;}
+.go-box{background:var(--panel);border:4px solid var(--gold);border-radius:16px;padding:28px 24px;text-align:center;max-width:340px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.go-t{font-family:'Fredoka One',cursive;font-size:22px;color:var(--soil3);margin-bottom:8px;}
+.go-s{font-family:'Fredoka One',cursive;font-size:34px;color:var(--green);margin:12px 0;}
+.go-r{font-size:18px;font-weight:900;margin-bottom:6px;}
+.go-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+.bgo{font-family:'Fredoka One',cursive;font-size:16px;padding:10px 22px;color:var(--soil3);background:var(--gold);border:3px solid var(--gold2);border-radius:10px;cursor:pointer;}
+.bgo:hover{background:var(--gold2);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#555;border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="cloud">☁️</div><div class="cloud">☁️</div><div class="cloud">☁️</div>
+<div id="app">
+
+<!-- HEADER -->
+<header>
+  <div class="gtitle">🌾 PyCrop</div>
+  <div class="hstats">
+    <div class="chip gc"><span class="ci">💰</span><span class="cv" id="hgold">50</span></div>
+    <div class="chip sc"><span class="ci">🏆</span><span class="cv" id="hscore">0</span></div>
+    <div class="chip"><span class="ci">🔄</span><span class="cv" id="hround">1</span><div id="rbar-w"><div id="rbar" style="width:1%"></div></div><span style="font-size:10px;color:var(--muted)">/100</span></div>
+  </div>
+</header>
+
+<!-- SEEDS -->
+<div class="shop-wrap">
+  <div class="seeds-row" id="seed-shop"></div>
+</div>
+
+<!-- FARM -->
+<div class="farm-wrap">
+  <div id="farm-container">
+    <div id="farmer">👨‍🌾</div>
+    <div id="fbubble"></div>
+  </div>
+</div>
+
+<!-- CONTROL BAR -->
+<div class="ctrl-bar">
+  <button class="cbtn c-code"  onclick="openModal()">📝 Code</button>
+  <button class="cbtn c-run"   id="btnRun"   onclick="runCode()">▶ Run</button>
+  <button class="cbtn c-pause" id="btnPause" onclick="pauseCode()" disabled>⏸ Pause</button>
+  <button class="cbtn c-step"  id="btnStep"  onclick="stepCode()" disabled>👟 Step</button>
+</div>
+<div class="speed-row">⚡ Speed: <input type="range" id="spd" min="0" max="10" value="3" oninput="updateSpdLabel()"><span class="speed-lbl" id="spdLbl">3×</span></div>
+<div id="olog"></div>
+
+</div><!-- /app -->
+
+<!-- ═══════════════════════════
+     MODAL BLOCK EDITOR
+═══════════════════════════ -->
+<div id="modal-overlay">
+<div id="modal">
+  <div class="modal-header">
+    <div class="modal-title">🧩 Build Your Program</div>
+    <span class="modal-close" onclick="closeModal()">✕</span>
+  </div>
+  <div class="modal-body">
+
+    <!-- PALETTE -->
+    <div id="palette">
+      <div class="pal-section">🌾 FARM</div>
+      <div class="pblock pb-plant"   draggable="true" data-type="plant"    ><span class="pi">🌱</span>Plant</div>
+      <div class="pblock pb-harvest" draggable="true" data-type="harvest"  ><span class="pi">✂️</span>Harvest</div>
+      <div class="pblock pb-harvest" draggable="true" data-type="is_ready" ><span class="pi">🔍</span>Is Ready?</div>
+      <div class="pblock pb-print"   draggable="true" data-type="print"    ><span class="pi">💬</span>Print</div>
+      <div class="pal-section">🔁 LOOPS</div>
+      <div class="pblock pb-loop"    draggable="true" data-type="for"        ><span class="pi">🔁</span>For Loop</div>
+      <div class="pblock pb-loop"    draggable="true" data-type="while_true" ><span class="pi">♾️</span>While True</div>
+      <div class="pblock pb-loop"    draggable="true" data-type="while"      ><span class="pi">🔄</span>While cond</div>
+      <div class="pal-section">❓ IF / ELSE</div>
+      <div class="pblock pb-if"      draggable="true" data-type="if"     ><span class="pi">❓</span>If</div>
+      <div class="pblock pb-if"      draggable="true" data-type="elif"   ><span class="pi">🔀</span>Else If</div>
+      <div class="pblock pb-if"      draggable="true" data-type="else"   ><span class="pi">↩️</span>Else</div>
+      <div class="pal-section">📦 VARS</div>
+      <div class="pblock pb-var"     draggable="true" data-type="set"    ><span class="pi">📦</span>Set Var</div>
+    </div>
+
+    <!-- PROGRAM CANVAS -->
+    <div id="program-area" ondragover="onAreaDragOver(event)" ondrop="onAreaDrop(event)">
+      <div class="program-empty" id="prog-empty">⬅️ Drag blocks here to build your program!</div>
+    </div>
+
+  </div>
+  <div class="modal-footer">
+    <code id="code-preview"># Your program will appear here</code>
+    <button class="modal-clear" onclick="clearProgram()">🗑 Clear</button>
+    <button class="modal-done"  onclick="closeModal()">✅ Done</button>
+  </div>
+</div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gover">
+  <div class="go-box">
+    <div class="go-t">🌾 Season Over!</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:2px">Final Score</div>
+    <div class="go-s" id="gos">0</div>
+    <div class="go-r" id="gor"></div>
+    <div class="go-sub" id="gosub"></div>
+    <button class="bgo" onclick="restartGame()">▶ Play Again</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  SEED DATA  (6 crops)
+// ═══════════════════════════════
+const SEEDS={
+  wheat:     {name:'Wheat',  emoji:'🌾',cost:5, grow:3, sell:12 },
+  carrot:    {name:'Carrot', emoji:'🥕',cost:8, grow:5, sell:22 },
+  corn:      {name:'Corn',   emoji:'🌽',cost:15,grow:8, sell:45 },
+  tomato:    {name:'Tomato', emoji:'🍅',cost:12,grow:6, sell:32 },
+  strawberry:{name:'Berry',  emoji:'🍓',cost:20,grow:10,sell:65 },
+  pumpkin:   {name:'Pumpkin',emoji:'🎃',cost:30,grow:15,sell:110},
+};
+
+// ═══════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════
+let G={gold:50,round:1,score:0,totalEarned:0,tiles:Array(16).fill(null),running:false,paused:false,stopFlag:false,stepResolve:null,farmerTile:0};
+
+// ═══════════════════════════════
+//  PROGRAM BLOCKS DATA MODEL
+// ═══════════════════════════════
+// Each block: {id, type, params:{}, children:[]}
+let program=[];
+let nextId=1;
+function mkId(){return nextId++;}
+
+// ═══════════════════════════════
+//  BUILD SHOP
+// ═══════════════════════════════
+function buildShop(){
+  const el=document.getElementById('seed-shop');el.innerHTML='';
+  Object.entries(SEEDS).forEach(([k,s])=>{
+    const d=document.createElement('div');
+    d.className='sc';d.dataset.seed=k;
+    d.innerHTML=`<div class="se">${s.emoji}</div><div class="sn">${s.name}</div><div class="sc2">💰${s.cost}</div><div class="ss">→💰${s.sell}</div><div class="st">⏱${s.grow}r</div>`;
+    d.addEventListener('click',()=>{
+      document.querySelectorAll('.sc').forEach(x=>x.classList.remove('active'));
+      d.classList.add('active');
+      G.selectedSeed=k;
+    });
+    el.appendChild(d);
+  });
+  // default select wheat
+  el.querySelector('[data-seed=wheat]').classList.add('active');
+  G.selectedSeed='wheat';
+}
+
+// ═══════════════════════════════
+//  BUILD GRID
+// ═══════════════════════════════
+function buildGrid(){
+  const fc=document.getElementById('farm-container');
+  fc.querySelectorAll('.tile').forEach(t=>t.remove());
+  for(let i=0;i<16;i++){
+    const t=document.createElement('div');t.className='tile';t.id=`t${i}`;
+    t.innerHTML=`<div class="tnum">${i}</div>`;fc.appendChild(t);
+  }
+  fc.appendChild(document.getElementById('farmer'));
+  fc.appendChild(document.getElementById('fbubble'));
+  setTimeout(()=>placeFarmer(0,false),80);
+  renderTiles();
+}
+
+function renderTiles(){
+  for(let i=0;i<16;i++){
+    const el=document.getElementById(`t${i}`);if(!el)continue;
+    const p=G.tiles[i];el.className='tile';
+    if(!p){el.innerHTML=`<div class="tnum">${i}</div><div class="tstatus" style="color:rgba(255,255,255,.2);font-size:7px">empty</div>`;}
+    else{
+      const s=SEEDS[p.type],pr=Math.min(1,p.age/s.grow),ripe=p.age>=s.grow;
+      if(ripe)el.classList.add('mature');
+      el.innerHTML=`<div class="tnum">${i}</div><div class="temoji">${s.emoji}</div><div class="tstatus ${ripe?'ripe':''}">${ripe?'✨RIPE':p.age+'/'+s.grow}</div><div class="tprog"><div class="tprog-f" style="width:${pr*100}%"></div></div>`;
+    }
+  }
+  document.getElementById('hgold').textContent=G.gold;
+  document.getElementById('hscore').textContent=G.score;
+  document.getElementById('hround').textContent=G.round;
+  document.getElementById('rbar').style.width=Math.round(G.round/100*100)+'%';
+}
+
+// ═══════════════════════════════
+//  FARMER
+// ═══════════════════════════════
+function getTileCenter(idx){
+  const tile=document.getElementById(`t${idx}`),fc=document.getElementById('farm-container');
+  if(!tile||!fc)return{x:0,y:0};
+  const tr=tile.getBoundingClientRect(),cr=fc.getBoundingClientRect();
+  return{x:tr.left-cr.left+tr.width/2,y:tr.top-cr.top+tr.height*.12};
+}
+function placeFarmer(idx,animate=true){
+  G.farmerTile=Math.max(0,Math.min(15,idx));
+  const{x,y}=getTileCenter(G.farmerTile);
+  const f=document.getElementById('farmer'),b=document.getElementById('fbubble');
+  if(!animate)f.style.transition='none';
+  f.style.left=x+'px';f.style.top=y+'px';
+  if(!animate)setTimeout(()=>f.style.transition='',10);
+  b.style.left=x+'px';b.style.top=y+'px';
+}
+function farmerSay(msg,dur=1000){
+  const b=document.getElementById('fbubble');
+  const{x,y}=getTileCenter(G.farmerTile);
+  b.style.left=x+'px';b.style.top=y+'px';
+  b.textContent=msg;b.style.opacity='1';
+  return new Promise(r=>setTimeout(()=>{b.style.opacity='0';setTimeout(r,220);},dur));
+}
+function farmerWork(){const f=document.getElementById('farmer');f.classList.remove('working');void f.offsetWidth;f.classList.add('working');}
+function sleep(ms){return ms<=0?Promise.resolve():new Promise(r=>setTimeout(r,ms));}
+// Speed: slider 0–10 → delay in ms
+// 0=5000ms(demo), 1=2000ms, 3=500ms(default), 5=100ms, 8=20ms, 10=0ms(instant)
+const SPD_MAP=[5000,2000,1000,500,250,100,50,20,8,2,0];
+const spd=()=>SPD_MAP[parseInt(document.getElementById('spd').value)]??500;
+function updateSpdLabel(){
+  const v=parseInt(document.getElementById('spd').value);
+  document.getElementById('spdLbl').textContent=v===10?'Max':v+'×';
+}
+
+// ═══════════════════════════════
+//  FARM ACTIONS
+// ═══════════════════════════════
+async function moveFarmerTo(idx){
+  if(G.farmerTile!==idx){
+    placeFarmer(idx, spd()>0);  // skip animation at max speed
+    if(spd()>0) await sleep(Math.min(spd()*.6, 300));
+  }
+}
+async function doPlant(idx,seedKey){
+  idx = typeof idx === 'number' ? Math.round(idx) : parseInt(idx);
+  if(isNaN(idx)||idx<0||idx>15){log(`plant(): tile must be 0–15, got "${idx}"`,'e');return;}
+  const seed=SEEDS[seedKey];
+  if(!seed){log(`Unknown seed: "${seedKey}"`,'e');return;}
+  await moveFarmerTo(idx);
+  if(G.tiles[idx]){if(spd()>20)await farmerSay('🚫 Occupied!',Math.min(spd(),600));log(`Tile ${idx} occupied!`,'e');return;}
+  if(G.gold<seed.cost){if(spd()>20)await farmerSay(`Need 💰${seed.cost}!`,Math.min(spd(),600));log(`Not enough gold! Need 💰${seed.cost}`,'e');return;}
+  farmerWork();
+  if(spd()>0) await sleep(Math.min(spd()*.4,200));
+  G.gold-=seed.cost;G.tiles[idx]={type:seedKey,age:0};
+  renderTiles();
+  if(spd()>20) await farmerSay(`${seed.emoji} Planted!`,Math.min(spd()*.6,500));
+  log(`🌱 Planted ${seed.emoji} ${seed.name} on tile ${idx} (-💰${seed.cost})`,'o');
+}
+async function doHarvest(idx){
+  idx = typeof idx === 'number' ? Math.round(idx) : parseInt(idx);
+  if(isNaN(idx)||idx<0||idx>15){log(`harvest(): tile must be 0–15`,'e');return;}
+  await moveFarmerTo(idx);
+  const p=G.tiles[idx];
+  if(!p){if(spd()>20)await farmerSay('Empty!',Math.min(spd(),500));log(`Tile ${idx} is empty.`,'e');return;}
+  const seed=SEEDS[p.type];
+  if(p.age<seed.grow){if(spd()>20)await farmerSay(`${p.age}/${seed.grow} rounds`,Math.min(spd(),700));log(`${seed.name} on tile ${idx} not ready (${p.age}/${seed.grow})`,'e');return;}
+  farmerWork();
+  if(spd()>0) await sleep(Math.min(spd()*.35,180));
+  G.gold+=seed.sell;G.score+=seed.sell;G.totalEarned+=seed.sell;
+  G.tiles[idx]=null;renderTiles();
+  spawnPop(idx,`+💰${seed.sell}`);
+  if(spd()>20) await farmerSay(`+💰${seed.sell}! 🎉`,Math.min(spd()*.6,500));
+  log(`✨ Harvested ${seed.emoji} from tile ${idx}! +💰${seed.sell}`,'g');
+}
+// ═══════════════════════════════
+//  ROUND ADVANCEMENT (internal)
+// ═══════════════════════════════
+function advanceRound(){
+  // Age all plants
+  for(let i=0;i<16;i++) if(G.tiles[i]) G.tiles[i].age++;
+  G.round++;
+  let m=0; G.tiles.forEach(t=>{if(t&&t.age>=SEEDS[t.type].grow)m++;});
+  if(m>0) log(`⏭ Round ${G.round} — ✨ ${m} ready to harvest!`,'g');
+  else log(`⏭ Round ${G.round}`,'i');
+  renderTiles();
+}
+
+function resetGame(){
+  G.gold=50; G.round=1; G.score=0; G.totalEarned=0;
+  G.tiles=Array(16).fill(null); G.farmerTile=0;
+  renderTiles();
+  placeFarmer(0, false);
+  document.getElementById('olog').innerHTML='';
+}
+
+
+function generateCode(blocks, indent=0){
+  const pad='    '.repeat(indent);
+  let out='';
+  for(const b of blocks){
+    // tile value: if it looks like a number use it raw, otherwise treat as variable name
+    const tileVal = (v)=>{
+      const s = String(v??'0').trim();
+      return isNaN(s) ? s : s;  // both cases: pass as-is (var name or number)
+    };
+    const body = (children)=>{
+      if(children&&children.length) return generateCode(children,indent+1);
+      return `${pad}    pass\n`;
+    };
+    switch(b.type){
+      case 'plant':
+        out+=`${pad}plant(${tileVal(b.params.tile)}, "${b.params.seed??'wheat'}")\n`;break;
+      case 'harvest':
+        out+=`${pad}harvest(${tileVal(b.params.tile)})\n`;break;
+      case 'print':
+        out+=`${pad}print(${b.params.val??'gold'})\n`;break;
+      case 'for':{
+        const v=b.params.var||'i', s=b.params.start??0, e2=b.params.end??4;
+        out+=`${pad}for ${v} in range(${s}, ${e2}):\n`;
+        out+=body(b.children);
+        break;
+      }
+      case 'while_true':
+        out+=`${pad}while True:\n`;
+        out+=body(b.children);break;
+      case 'elif':
+        out+=`${pad}elif ${b.params.left??'gold'} ${b.params.op??'>'} ${b.params.right??'0'}:\n`;
+        out+=body(b.children);break;
+      case 'is_ready':{
+        const t = String(b.params.tile??'0').trim();
+        out+=`${pad}if is_ready(${t}):\n`;
+        out+=body(b.children);break;
+      }
+      case 'while':
+        out+=`${pad}while ${b.params.left??'gold'} ${b.params.op??'>'} ${b.params.right??'0'}:\n`;
+        out+=body(b.children);break;
+      case 'if':
+        out+=`${pad}if ${b.params.left??'gold'} ${b.params.op??'>'} ${b.params.right??'0'}:\n`;
+        out+=body(b.children);break;
+      case 'else':
+        out+=`${pad}else:\n`;
+        out+=body(b.children);break;
+      case 'set':
+        out+=`${pad}${b.params.var??'x'} = ${b.params.val??'0'}\n`;break;
+    }
+  }
+  return out;
+}
+
+function updatePreview(){
+  const code=generateCode(program);
+  document.getElementById('code-preview').textContent=code||'# (empty program)';
+}
+
+// ═══════════════════════════════
+//  RENDER PROGRAM BLOCKS
+// ═══════════════════════════════
+function renderProgram(){
+  const area=document.getElementById('program-area');
+  const empty=document.getElementById('prog-empty');
+  area.querySelectorAll('.prog-block,.drop-zone').forEach(e=>e.remove());
+  if(program.length===0){empty.style.display='block';}
+  else{
+    empty.style.display='none';
+    renderBlockList(program, area, null);
+  }
+  updatePreview();
+}
+
+function renderBlockList(blocks, container, parentId){
+  // top drop zone
+  container.appendChild(makeDropZone(parentId, 0));
+  blocks.forEach((b,i)=>{
+    container.appendChild(makeBlockEl(b, parentId));
+    container.appendChild(makeDropZone(parentId, i+1));
+  });
+}
+
+const BG={
+  plant:'var(--b-plant)',harvest:'var(--b-harvest)',is_ready:'var(--b-harvest)',print:'var(--b-print)',
+  for:'var(--b-loop)',while:'var(--b-loop)',while_true:'var(--b-loop)',
+  if:'var(--b-if)',elif:'var(--b-if)',else:'var(--b-if)',set:'var(--b-var)'
+};
+const ICONS={plant:'🌱',harvest:'✂️',is_ready:'🔍',print:'💬',for:'🔁',while:'🔄',while_true:'♾️',if:'❓',elif:'🔀',else:'↩️',set:'📦'};
+const HAS_CHILDREN=['for','while','while_true','if','elif','else'];
+
+function makeBlockEl(b, parentId){
+  const el=document.createElement('div');
+  el.className='prog-block'+(HAS_CHILDREN.includes(b.type)?'':' flat');
+  el.dataset.id=b.id;
+  el.dataset.parent=parentId??'';
+  el.style.background=BG[b.type]||'#555';
+  el.draggable=true;
+
+  el.addEventListener('dragstart',e=>{
+    e.dataTransfer.setData('prog-id',b.id);
+    el.classList.add('dragging-prog');
+    e.stopPropagation();
+  });
+  el.addEventListener('dragend',()=>el.classList.remove('dragging-prog'));
+
+  // Head
+  const head=document.createElement('div');head.className='pb-head';
+  head.innerHTML=`<span>${ICONS[b.type]??'▸'}</span>`;
+
+  // Build inline controls based on type
+  head.appendChild(makeControls(b));
+
+  // Delete button
+  const del=document.createElement('span');del.className='pb-del';del.textContent='✕';
+  del.onclick=(e)=>{e.stopPropagation();deleteBlock(b.id,parentId);};
+  head.appendChild(del);
+  el.appendChild(head);
+
+  // Body (children)
+  if(HAS_CHILDREN.includes(b.type)){
+    const body=document.createElement('div');body.className='pb-body';
+    body.dataset.parentId=b.id;
+
+    body.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();body.classList.add('drop-highlight');});
+    body.addEventListener('dragleave',()=>body.classList.remove('drop-highlight'));
+    body.addEventListener('drop',e=>{
+      e.preventDefault();e.stopPropagation();body.classList.remove('drop-highlight');
+      const progId=e.dataTransfer.getData('prog-id');
+      const palType=e.dataTransfer.getData('pal-type');
+      if(palType)addBlockToParent(palType,b.id);
+      else if(progId)moveBlockToParent(parseInt(progId),b.id);
+    });
+
+    renderBlockList(b.children||[], body, b.id);
+
+    // "+ add inside" hint if empty
+    if(!b.children||b.children.length===0){
+      const hint=document.createElement('div');hint.className='pb-add-child';hint.textContent='+ drop blocks here';
+      body.appendChild(hint);
+    }
+    el.appendChild(body);
+  }
+  return el;
+}
+
+function makeControls(b){
+  const wrap=document.createElement('span');
+  wrap.style.display='flex';wrap.style.alignItems='center';wrap.style.gap='4px';wrap.style.flexWrap='wrap';
+
+  const inp=(val,key,w,placeholder)=>{
+    const i=document.createElement('input');i.type='text';i.className='pb-input';
+    i.value=val??'';i.placeholder=placeholder??'';i.style.width=w||'44px';
+    i.addEventListener('input',()=>{b.params[key]=i.value;updatePreview();});
+    i.addEventListener('click',e=>e.stopPropagation());
+    return i;
+  };
+  const sel=(val,key,opts)=>{
+    const s=document.createElement('select');s.className='pb-select';
+    opts.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;s.appendChild(op);});
+    s.addEventListener('change',()=>{b.params[key]=s.value;updatePreview();});
+    s.addEventListener('click',e=>e.stopPropagation());
+    return s;
+  };
+  const txt=t=>{const s=document.createElement('span');s.textContent=t;s.style.color='rgba(255,255,255,.85)';s.style.fontSize='13px';return s;};
+
+  const seedOpts=Object.entries(SEEDS).map(([k,s])=>({v:k,l:s.emoji+' '+s.name}));
+  const varOpts=[{v:'gold',l:'gold'},{v:'rounds_left',l:'rounds left'},{v:'i',l:'i'},{v:'x',l:'x'}];
+  const opOpts=[{v:'>',l:'>'},{v:'<',l:'<'},{v:'>=',l:'>='},{v:'<=',l:'<='},{v:'==',l:'=='}];
+
+  switch(b.type){
+    case 'plant':
+      wrap.append(txt('tile'),inp(b.params.tile,'tile','38px','0'),txt('plant'),sel(b.params.seed,'seed',seedOpts));break;
+    case 'harvest':
+      wrap.append(txt('tile'),inp(b.params.tile,'tile','38px','0'),txt('harvest'));break;
+    case 'print':
+      wrap.append(txt('show'),sel(b.params.val,'val',varOpts));break;
+    case 'for':
+      wrap.append(txt('for'),inp(b.params.var,'var','28px','i'),txt('='),inp(b.params.start,'start','30px','0'),txt('to'),inp(b.params.end,'end','36px','4'));break;
+    case 'while_true':
+      wrap.append(txt('♾️ repeat every round (while True)'));break;
+    case 'while':
+      wrap.append(txt('while'),sel(b.params.left,'left',varOpts),sel(b.params.op,'op',opOpts),inp(b.params.right,'right','36px','0'));break;
+    case 'elif':
+      wrap.append(txt('else if'),sel(b.params.left,'left',varOpts),sel(b.params.op,'op',opOpts),inp(b.params.right,'right','36px','0'));break;
+    case 'is_ready':
+      wrap.append(txt('tile'),inp(b.params.tile,'tile','38px','0'),txt('is ready to harvest?'));break;
+    case 'if':
+      wrap.append(txt('if'),sel(b.params.left,'left',varOpts),sel(b.params.op,'op',opOpts),inp(b.params.right,'right','36px','0'));break;
+    case 'else':
+      wrap.append(txt('else (do this instead)'));break;
+    case 'set':
+      wrap.append(inp(b.params.var,'var','30px','x'),txt('='),inp(b.params.val,'val','42px','0'));break;
+  }
+  return wrap;
+}
+
+function defaultParams(type){
+  switch(type){
+    case 'plant':   return{tile:0,seed:'wheat'};
+    case 'harvest': return{tile:0};
+    case 'print':   return{val:'gold'};
+    case 'for':     return{var:'i',start:0,end:4};
+    case 'while_true': return{};
+    case 'while':   return{left:'gold',op:'>',right:'0'};
+    case 'if':      return{left:'gold',op:'>',right:'10'};
+    case 'elif':    return{left:'gold',op:'>',right:'0'};
+    case 'else':    return{};
+    case 'is_ready':return{tile:'0'};
+    case 'set':     return{var:'x',val:'0'};
+    default:        return{};
+  }
+}
+
+// ═══════════════════════════════
+//  DROP ZONES
+// ═══════════════════════════════
+function makeDropZone(parentId, insertIdx){
+  const dz=document.createElement('div');dz.className='drop-zone';
+  dz.dataset.parentId=parentId??'';dz.dataset.insertIdx=insertIdx;
+  dz.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();dz.classList.add('active');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('active'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();e.stopPropagation();dz.classList.remove('active');
+    const palType=e.dataTransfer.getData('pal-type');
+    const progId=e.dataTransfer.getData('prog-id');
+    const pId=dz.dataset.parentId===''?null:parseInt(dz.dataset.parentId);
+    const idx=parseInt(dz.dataset.insertIdx);
+    if(palType)insertNewBlock(palType,pId,idx);
+    else if(progId)moveBlock(parseInt(progId),pId,idx);
+  });
+  return dz;
+}
+
+// ═══════════════════════════════
+//  PALETTE DRAG
+// ═══════════════════════════════
+document.querySelectorAll('.pblock').forEach(el=>{
+  el.addEventListener('dragstart',e=>{
+    e.dataTransfer.setData('pal-type',el.dataset.type);
+    e.stopPropagation();
+  });
+});
+
+function onAreaDragOver(e){e.preventDefault();}
+function onAreaDrop(e){
+  e.preventDefault();
+  const palType=e.dataTransfer.getData('pal-type');
+  const progId=e.dataTransfer.getData('prog-id');
+  if(palType)addBlockToRoot(palType);
+  else if(progId)moveBlockToRoot(parseInt(progId));
+}
+
+// ═══════════════════════════════
+//  BLOCK CRUD
+// ═══════════════════════════════
+function newBlock(type){
+  return{id:mkId(),type,params:{...defaultParams(type)},children:[]};
+}
+
+function addBlockToRoot(type){
+  program.push(newBlock(type));renderProgram();
+}
+function addBlockToParent(type,parentId){
+  const parent=findBlock(program,parentId);
+  if(parent){parent.children.push(newBlock(type));renderProgram();}
+}
+function insertNewBlock(type,parentId,insertIdx){
+  const list=parentId===null?program:findBlock(program,parentId)?.children;
+  if(!list)return;
+  list.splice(insertIdx,0,newBlock(type));renderProgram();
+}
+function deleteBlock(id,parentId){
+  const list=parentId===null||parentId===''?program:findBlock(program,parentId===undefined?null:parseInt(parentId))?.children;
+  if(!list)return;
+  const i=list.findIndex(b=>b.id===id);
+  if(i>=0)list.splice(i,1);renderProgram();
+}
+function findBlock(list,id){
+  for(const b of list){if(b.id===id)return b;if(b.children){const f=findBlock(b.children,id);if(f)return f;}}return null;
+}
+function findAndRemove(list,id){
+  for(let i=0;i<list.length;i++){
+    if(list[i].id===id){return list.splice(i,1)[0];}
+    if(list[i].children){const r=findAndRemove(list[i].children,id);if(r)return r;}
+  }return null;
+}
+function moveBlock(id,targetParentId,insertIdx){
+  const b=findAndRemove(program,id);if(!b)return;
+  const list=targetParentId===null?program:findBlock(program,targetParentId)?.children;
+  if(!list){program.push(b);}else{list.splice(insertIdx,0,b);}
+  renderProgram();
+}
+function moveBlockToRoot(id){
+  const b=findAndRemove(program,id);if(!b)return;
+  program.push(b);renderProgram();
+}
+function moveBlockToParent(id,parentId){
+  const b=findAndRemove(program,id);if(!b)return;
+  const parent=findBlock(program,parentId);
+  if(parent){parent.children.push(b);renderProgram();}
+}
+function clearProgram(){program=[];renderProgram();}
+
+// ═══════════════════════════════
+//  MODAL
+// ═══════════════════════════════
+function openModal(){document.getElementById('modal-overlay').classList.add('show');renderProgram();}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show');}
+
+// ═══════════════════════════════
+//  RUN / PAUSE / STEP
+// ═══════════════════════════════
+// State machine:
+//   idle    → Run   → running
+//   running → Pause → paused  (Step activates)
+//   paused  → Step  → paused  (advances one tick)
+//   paused  → Run   → running (resumes)
+//   any     → stop internally → idle
+
+function setButtonState(state){
+  const bRun   = document.getElementById('btnRun');
+  const bPause = document.getElementById('btnPause');
+  const bStep  = document.getElementById('btnStep');
+  [bRun,bPause,bStep].forEach(b=>b.classList.remove('paused-active'));
+  if(state==='idle'){
+    bRun.disabled=false;   bRun.textContent='▶ Run';
+    bPause.disabled=true;  bPause.textContent='⏸ Pause';
+    bStep.disabled=true;
+  } else if(state==='running'){
+    bRun.disabled=false;   bRun.textContent='▶ Run';
+    bPause.disabled=false; bPause.textContent='⏸ Pause';
+    bStep.disabled=true;
+  } else if(state==='paused'){
+    bRun.disabled=false;   bRun.textContent='▶ Run';
+    bPause.disabled=true;  bPause.textContent='⏸ Paused';
+    bStep.disabled=false;  bStep.classList.add('paused-active');
+  }
+}
+
+async function runCode(){
+  // If paused or running, kill the current execution then start fresh
+  if(G.running){
+    G.stopFlag=true; G.paused=false;
+    if(G.stepResolve){G.stepResolve();G.stepResolve=null;}
+    // Wait a tick for the async chain to unwind before restarting
+    await sleep(50);
+  }
+
+  const code=generateCode(program).trim();
+  if(!code){log('Build a program first! Click 📝 Code','e');return;}
+
+  resetGame();
+  log('▶ Starting from Round 1...','i');
+
+  G.running=true; G.paused=false; G.stopFlag=false;
+  setButtonState('running');
+
+  const hasWhileTrue=/^while\s+True\s*:/m.test(code);
+
+  try{
+    await execCode(code);
+    if(!hasWhileTrue && !G.stopFlag){
+      advanceRound();
+      await sleep(400);
+      log(`✅ Program finished! Game over after Round ${G.round-1}.`,'g');
+      endGame();
+    }
+  } catch(e){
+    if(e.message!=='__stop__') log('⚠ '+e.message,'e');
+  }
+
+  G.running=false; G.paused=false; G.stepResolve=null;
+  setButtonState('idle');
+}
+
+function pauseCode(){
+  if(!G.running||G.paused) return;
+  G.paused=true;
+  setButtonState('paused');
+  log('⏸ Paused — press 👟 Step to advance one action, or ▶ Resume to continue.','i');
+}
+
+function stepCode(){
+  if(!G.running||!G.paused) return;
+  if(G.stepResolve){G.stepResolve();G.stepResolve=null;}
+}
+
+function stopCode(){
+  G.stopFlag=true; G.paused=false;
+  if(G.stepResolve){G.stepResolve();G.stepResolve=null;}
+}
+
+async function execCode(code){
+  const js=toAsyncJS(code);
+  console.log('=== Generated JS ===\n'+js);
+  const chk=()=>{ if(G.stopFlag) throw new Error('__stop__'); };
+  const tick=async()=>{
+    chk();
+    if(G.paused){ await new Promise(r=>{G.stepResolve=r;}); chk(); }
+    else if(spd()>0) await sleep(spd()*0.15);
+  };
+  const nextRound=async()=>{
+    chk();
+    if(G.round>=100){
+      log('🏁 100 rounds complete!','g');
+      endGame();
+      throw new Error('__stop__');
+    }
+    advanceRound();
+    if(spd()>0) await sleep(Math.min(spd(), 400));
+    chk();
+  };
+  const isReady=(idx)=>{
+    idx=typeof idx==='number'?Math.round(idx):parseInt(idx);
+    if(isNaN(idx)||idx<0||idx>15) return false;
+    const p=G.tiles[idx];
+    if(!p) return false;
+    return p.age>=SEEDS[p.type].grow;
+  };
+  const AF=Object.getPrototypeOf(async function(){}).constructor;
+  let fn;
+  try{
+    fn=new AF(
+      'plant','harvest','is_ready','print','int','str','range','len','abs','min','max',
+      'gold','rounds_left','round_num','__tick','__chk','__nextRound',
+      js
+    );
+  } catch(e){ throw new Error('Code error: '+e.message); }
+  await fn(
+    async(t,s)=>{chk();await doPlant(t,s);await tick();},
+    async(t)=>{chk();await doHarvest(t);await tick();},
+    isReady,
+    (...a)=>log(a.join(' '),'i'),
+    v=>parseInt(v), v=>String(v),
+    n=>Array.from({length:Math.max(0,parseInt(n))},(_,i)=>i),
+    a=>a.length, Math.abs, Math.min, Math.max,
+    G.gold, 100-G.round+1, G.round,
+    tick, chk, nextRound
+  );
+}
+
+
+function toAsyncJS(code){
+  const lines = code.replace(/\r/g,'').split('\n');
+  let out = '', gc = 0;
+  let blockStack = []; // indent levels that opened a block
+
+  for(let i = 0; i < lines.length; i++){
+    const raw = lines[i];
+    const stripped = raw.trimStart();
+    if(!stripped || stripped.startsWith('#')) continue;
+    const indent = raw.length - stripped.length;
+
+    const isElseKind = /^(else\s*:|elif\s)/.test(stripped);
+    if(isElseKind){
+      // Close blocks deeper than current indent
+      while(blockStack.length > 0 && blockStack[blockStack.length-1] > indent){
+        blockStack.pop(); out += '}\n';
+      }
+      // Pop the matching if-block — its } is baked into "} else {"
+      if(blockStack.length > 0 && blockStack[blockStack.length-1] === indent){
+        blockStack.pop();
+      }
+    } else {
+      // Close all blocks at or deeper than current indent
+      while(blockStack.length > 0 && blockStack[blockStack.length-1] >= indent){
+        blockStack.pop(); out += '}\n';
+      }
+    }
+
+    let line = stripped;
+    let opensBlock = false;
+
+    // for with two-arg range
+    if(/^for\s+\w+\s+in\s+range\([^,)]+,\s*[^)]+\)\s*:/.test(line)){
+      line = line.replace(/^for\s+(\w+)\s+in\s+range\(([^,)]+),\s*([^)]+)\)\s*:/, (_, v, s, e2) => {
+        return `for(let ${v}=Number(${s}),_g${gc}=0; ${v}<Number(${e2})&&_g${gc}<2000; ${v}++,_g${gc}++){await __tick();`;
+      });
+      gc++; opensBlock = true;
+    }
+    // for with one-arg range
+    else if(/^for\s+\w+\s+in\s+range\([^)]+\)\s*:/.test(line)){
+      line = line.replace(/^for\s+(\w+)\s+in\s+range\(([^)]+)\)\s*:/, (_, v, n) => {
+        return `for(let ${v}=0,_g${gc}=0; ${v}<Number(${n})&&_g${gc}<2000; ${v}++,_g${gc}++){await __tick();`;
+      });
+      gc++; opensBlock = true;
+    }
+    // while True — special: each iteration = one round
+    else if(/^while\s+True\s*:/.test(line)){
+      line = `while(true){await __nextRound();`;
+      opensBlock = true;
+    }
+    // while cond
+    else if(/^while\s+.+\s*:/.test(line)){
+      line = line.replace(/^while\s+(.+?)\s*:/, (_, c) => {
+        return `for(let _g${gc}=0; (${fx(c)})&&_g${gc}<2000; _g${gc}++){await __tick();`;
+      });
+      gc++; opensBlock = true;
+    }
+    // elif
+    else if(/^elif\s+.+\s*:/.test(line)){
+      line = line.replace(/^elif\s+(.+?)\s*:/, (_, c) => `} else if(${fx(c)}){`);
+      opensBlock = true;
+    }
+    // if
+    else if(/^if\s+.+\s*:/.test(line)){
+      line = line.replace(/^if\s+(.+?)\s*:/, (_, c) => `if(${fx(c)}){`);
+      opensBlock = true;
+    }
+    // else
+    else if(/^else\s*:/.test(line)){
+      line = '} else {';
+      opensBlock = true;
+    }
+    // pass
+    else if(/^pass\s*$/.test(line)){
+      line = '/* pass */';
+    }
+    // regular statement
+    else {
+      line = line.replace(/^(plant|harvest)\s*\(/, 'await $1(');
+      // is_ready(x) used as expression (e.g. inside if condition already handled above,
+      // but also can appear as standalone — map it so fx() doesn't break it
+      line = line.replace(/\bis_ready\s*\(/g, 'is_ready(');
+      line = line.replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null');
+      if(!line.trimEnd().endsWith(';')) line += ';';
+    }
+
+    out += line + '\n';
+    if(opensBlock) blockStack.push(indent);
+  }
+
+  // Close all remaining open blocks
+  while(blockStack.length > 0){ blockStack.pop(); out += '}\n'; }
+  return out;
+}
+function fx(e){
+  return e.replace(/\band\b/g,'&&').replace(/\bor\b/g,'||').replace(/\bnot\b/g,'!')
+          .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false');
+  // Note: is_ready() is left as-is — it maps to the JS is_ready function passed in
+}
+
+// ═══════════════════════════════
+//  HELPERS
+// ═══════════════════════════════
+function log(msg,t='o'){
+  const out=document.getElementById('olog'),d=document.createElement('div');
+  d.textContent='> '+msg;d.className={o:'lo',e:'le',i:'li',g:'lg'}[t]||'lo';
+  out.appendChild(d);out.scrollTop=out.scrollHeight;
+}
+function spawnPop(idx,text){
+  const tile=document.getElementById(`t${idx}`);if(!tile)return;
+  const r=tile.getBoundingClientRect(),d=document.createElement('div');
+  d.className='hpop';d.textContent=text;
+  d.style.left=(r.left+r.width/2-18)+'px';d.style.top=(r.top+window.scrollY-8)+'px';
+  document.body.appendChild(d);setTimeout(()=>d.remove(),1300);
+}
+
+// ═══════════════════════════════
+//  END GAME
+// ═══════════════════════════════
+function endGame(){
+  const s=G.score;
+  const rank=s>=1500?'🏆 LEGENDARY FARMER!':s>=1000?'🥇 MASTER FARMER!':s>=600?'🥈 EXPERT FARMER!':s>=300?'🥉 GOOD FARMER!':'🌱 APPRENTICE FARMER';
+  document.getElementById('gos').textContent='💰 '+s;
+  document.getElementById('gor').textContent=rank;
+  document.getElementById('gosub').innerHTML=`Total gold: 💰${G.totalEarned} | Rounds: ${G.round}`;
+  document.getElementById('gover').classList.add('show');
+}
+function restartGame(){
+  document.getElementById('gover').classList.remove('show');
+  G.running=false; G.paused=false; G.stopFlag=false; G.stepResolve=null;
+  buildGrid(); buildShop();
+  resetGame();
+  setButtonState('idle');
+  log('New game! Click 📝 Code to build your program, then ▶ Run!','g');
+}
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+buildShop();buildGrid();renderTiles();
+// Starter program: while True → plant all tiles each round
+const wt = newBlock('while_true');
+const f  = newBlock('for'); f.params = {var:'i', start:0, end:16};
+const p  = newBlock('plant'); p.params = {tile:'i', seed:'wheat'};
+f.children = [p];
+const h  = newBlock('harvest'); h.params = {tile:'i'};
+// second for for harvest
+const f2 = newBlock('for'); f2.params = {var:'i', start:0, end:16};
+f2.children = [h];
+wt.children = [f, f2];
+program = [wt];
+updatePreview();
+log('🌾 Welcome to PyCrop! Press 📝 Code to see the starter program.','g');
+log('▶ Press Run — it resets and plays all 100 rounds automatically!','i');
+log('💡 No "while True"? Program runs once = 1 round only.','i');
+</script>
+</body>
+</html>

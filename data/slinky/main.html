@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌀 Slinky Fun!</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #1a1a2e;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  color: #fff;
+  user-select: none;
+}
+header {
+  text-align: center;
+  padding: 6px 0 3px;
+  background: #0f0f1e;
+  border-bottom: 2px solid #ffffff22;
+  flex-shrink: 0;
+}
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  background: linear-gradient(90deg,#ffe066,#ff6b35,#ff3366,#ff6b35,#ffe066);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+header p { font-size: 0.7rem; color: #aaa; margin-top: 1px; }
+
+#main { display:flex; flex:1; overflow:hidden; min-height:0; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: 155px; flex-shrink:0;
+  background: #12122a;
+  padding: 10px 7px;
+  display: flex; flex-direction: column; gap: 7px;
+  border-right: 1px solid #ffffff18;
+  overflow-y: auto;
+}
+#sidebar h2 { font-size:0.8rem; color:#ffe066; text-align:center; letter-spacing:1px; margin-bottom:2px; }
+
+.tbtn {
+  display:flex; align-items:center; gap:6px;
+  background:#1e1e40; border:2px solid transparent; border-radius:8px;
+  color:#ccc; font-size:0.78rem; font-weight:bold;
+  padding:6px 8px; cursor:pointer; transition:all 0.12s; width:100%;
+}
+.tbtn:hover { background:#2a2a55; color:#fff; }
+.tbtn.on { border-color:#ffe066; background:#2a2a55; color:#fff; }
+
+.sec { border-top:1px solid #ffffff12; padding-top:7px; }
+.lbl { font-size:0.63rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+
+#crow { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; }
+.sw {
+  width:22px; height:22px; border-radius:50%;
+  border:2px solid transparent; cursor:pointer; transition:transform 0.12s;
+}
+.sw:hover { transform:scale(1.25); }
+.sw.on { border-color:#fff; transform:scale(1.25); }
+
+/* Rainbow gradient swatch */
+#sw-rainbow {
+  background: conic-gradient(#ffe066,#ff6b35,#ff3366,#c77dff,#4d96ff,#6bcb77,#ffe066);
+}
+
+.abtn {
+  border:none; border-radius:8px; color:#fff;
+  font-size:0.82rem; font-weight:bold; padding:7px 0;
+  cursor:pointer; transition:transform 0.12s; width:100%; margin-bottom:3px;
+}
+.abtn:hover { transform:scale(1.04); }
+.abtn.g { background:linear-gradient(135deg,#6bcb77,#338844); }
+.abtn.b { background:linear-gradient(135deg,#4d96ff,#2244cc); }
+.abtn.p { background:linear-gradient(135deg,#c77dff,#7722cc); }
+.abtn.r { background:linear-gradient(135deg,#ff6b35,#cc2200); }
+
+/* ── CANVAS ── */
+#cw {
+  flex:1; position:relative; overflow:hidden;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1f 100%);
+  cursor: grab;
+}
+#cw.dragging { cursor: grabbing; }
+canvas { display:block; }
+
+#hint {
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  background:#00000077; border:1px solid #ffffff22; border-radius:20px;
+  padding:5px 14px; font-size:0.7rem; color:#ccc; pointer-events:none; white-space:nowrap;
+}
+#hud {
+  position:absolute; top:8px; right:8px;
+  background:#00000066; border:1px solid #ffe06633; border-radius:10px;
+  padding:5px 11px; font-size:0.78rem; color:#ffe066; font-weight:bold;
+}
+#modebadge {
+  position:absolute; top:8px; left:8px;
+  background:#00000066; border:1px solid #ffffff22; border-radius:10px;
+  padding:4px 10px; font-size:0.7rem; color:#fff; pointer-events:none;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌀 SLINKY FUN!</h1>
+  <p>Grab &amp; swing the slinky • Build stairs for it to walk down</p>
+</header>
+
+<div id="main">
+  <div id="sidebar">
+    <h2>🛠 TOOLS</h2>
+    <button class="tbtn on" id="btn-grab"     onclick="setTool('grab')">    ✋ Grab Slinky</button>
+    <button class="tbtn"    id="btn-platform" onclick="setTool('platform')">📦 Platform</button>
+    <button class="tbtn"    id="btn-ramp"     onclick="setTool('ramp')">    📐 Ramp</button>
+    <button class="tbtn"    id="btn-bouncer"  onclick="setTool('bouncer')"> 🟢 Bouncer</button>
+    <button class="tbtn"    id="btn-erase"    onclick="setTool('erase')">   🧹 Erase</button>
+
+    <div class="sec">
+      <div class="lbl">🌈 Color</div>
+      <div id="crow">
+        <div id="sw-rainbow" class="sw on" data-c="rainbow" onclick="setColor(this)" title="Rainbow"></div>
+        <div class="sw" style="background:#ff3366" data-c="#ff3366" onclick="setColor(this)"></div>
+        <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="setColor(this)"></div>
+        <div class="sw" style="background:#ffe066" data-c="#ffe066" onclick="setColor(this)"></div>
+        <div class="sw" style="background:#6bcb77" data-c="#6bcb77" onclick="setColor(this)"></div>
+        <div class="sw" style="background:#4d96ff" data-c="#4d96ff" onclick="setColor(this)"></div>
+        <div class="sw" style="background:#c77dff" data-c="#c77dff" onclick="setColor(this)"></div>
+        <div class="sw" style="background:#aaa"    data-c="#cccccc" onclick="setColor(this)"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="lbl">⚡ Gravity</div>
+      <input type="range" id="gravSlider" min="0.05" max="0.8" step="0.05" value="0.3"
+             style="width:100%;accent-color:#c77dff" oninput="GRAVITY=parseFloat(this.value)">
+    </div>
+
+    <div class="sec">
+      <button class="abtn g" onclick="resetSlinky()">🌀 New Slinky</button>
+      <button class="abtn b" onclick="buildStairs()">🪜 Auto Stairs</button>
+      <button class="abtn p" onclick="addFloor()">➕ Add Floor</button>
+      <button class="abtn r" onclick="clearAll()">🗑 Clear All</button>
+    </div>
+
+    <div class="sec">
+      <div class="lbl">ℹ️ How to play</div>
+      <div style="font-size:0.65rem;color:#999;line-height:1.6">
+        <b style="color:#ffe066">Grab</b>: drag the slinky — swing it in a U or N shape and it follows!<br><br>
+        Other tools: drag empty space to draw.<br><br>
+        Build stairs and watch it walk down 🌀
+      </div>
+    </div>
+  </div>
+
+  <div id="cw">
+    <canvas id="gc"></canvas>
+    <div id="hint">💡 Switch tool to draw platforms</div>
+    <div id="hud">🌀 Score: <span id="sc">0</span></div>
+    <div id="modebadge">✋ Grab Slinky</div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ═══════════════════════════════════════════════════════════════
+//  CANVAS
+// ═══════════════════════════════════════════════════════════════
+var canvas = document.getElementById('gc');
+var ctx    = canvas.getContext('2d');
+var wrap   = document.getElementById('cw');
+
+function resize(){
+  canvas.width  = wrap.clientWidth  || 700;
+  canvas.height = wrap.clientHeight || 500;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ═══════════════════════════════════════════════════════════════
+//  PHYSICS CONFIG
+// ═══════════════════════════════════════════════════════════════
+var GRAVITY      = 0.30;
+var DAMPING      = 0.86;
+var SPRING_K     = 0.38;
+var NUM_RINGS    = 28;
+var RING_W       = 20;
+var RING_H       = 6;
+var REST_SEP     = 6;
+var PLAT_THICK   = 12;
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+var tool      = 'grab';
+var colorMode = 'rainbow';   // 'rainbow' or a hex string
+var platforms = [];
+var slinky    = null;
+var particles = [];
+var score     = 0;
+
+var drag = {
+  active: false,
+  mode: null,          // 'grab' | 'draw'
+  grabIdx: -1,
+  offX: 0, offY: 0,
+  startX:0, startY:0,
+  curX:0, curY:0,
+  prevX:0, prevY:0,    // for velocity on release
+  velX:0, velY:0
+};
+// Motion path — recorded while dragging, replayed after release
+var motionPath   = [];     // [{x,y}] finger positions while dragging
+var trailFade    = 0;      // 1 = fully visible → fades out
+var pathPlayback = null;   // non-null while slinky is following the path
+// pathPlayback = { pts:[{x,y}], cursor:float, speed:float }
+
+// ═══════════════════════════════════════════════════════════════
+//  EXPOSED TO HTML
+// ═══════════════════════════════════════════════════════════════
+window.setTool = function(t){
+  tool = t;
+  document.querySelectorAll('.tbtn').forEach(function(b){ b.classList.remove('on'); });
+  var el = document.getElementById('btn-'+t);
+  if(el) el.classList.add('on');
+  document.getElementById('hint').style.display = (t==='grab') ? 'none' : 'block';
+  var labels = { grab:'✋ Grab Slinky', platform:'📦 Draw Platform',
+                 ramp:'📐 Draw Ramp', bouncer:'🟢 Draw Bouncer', erase:'🧹 Erase' };
+  document.getElementById('modebadge').textContent = labels[t] || t;
+};
+
+window.setColor = function(el){
+  colorMode = el.getAttribute('data-c');
+  document.querySelectorAll('.sw').forEach(function(s){ s.classList.remove('on'); });
+  el.classList.add('on');
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  RING COLOR  — rainbow gradient through the stack
+// ═══════════════════════════════════════════════════════════════
+// The real slinky in the photo goes yellow-green → orange → red → yellow at bottom
+var RAINBOW = ['#ccff00','#ffe000','#ffaa00','#ff6b00','#ff3300','#ff1a66','#ff6b35','#ffcc00'];
+
+function ringColor(i, total){
+  if(colorMode !== 'rainbow') return colorMode;
+  var t  = i / (total - 1);            // 0 = top, 1 = bottom
+  var si = t * (RAINBOW.length - 1);
+  var lo = Math.floor(si), hi = Math.min(lo+1, RAINBOW.length-1);
+  var f  = si - lo;
+  return lerpColor(RAINBOW[lo], RAINBOW[hi], f);
+}
+
+function lerpColor(a, b, t){
+  var ar=parseInt(a.slice(1,3),16), ag=parseInt(a.slice(3,5),16), ab=parseInt(a.slice(5,7),16);
+  var br=parseInt(b.slice(1,3),16), bg=parseInt(b.slice(3,5),16), bb=parseInt(b.slice(5,7),16);
+  var r=Math.round(ar+(br-ar)*t);
+  var g=Math.round(ag+(bg-ag)*t);
+  var bl=Math.round(ab+(bb-ab)*t);
+  return 'rgb('+r+','+g+','+bl+')';
+}
+
+function darken(c, amt){
+  // works for both hex and rgb()
+  var m = c.match(/\d+/g);
+  if(!m||m.length<3) return c;
+  return 'rgb('+Math.max(0,+m[0]-amt)+','+Math.max(0,+m[1]-amt)+','+Math.max(0,+m[2]-amt)+')';
+}
+function lighten(c, amt){
+  var m = c.match(/\d+/g);
+  if(!m||m.length<3) return c;
+  return 'rgb('+Math.min(255,+m[0]+amt)+','+Math.min(255,+m[1]+amt)+','+Math.min(255,+m[2]+amt)+')';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SLINKY — chain of ring-centre nodes
+// ═══════════════════════════════════════════════════════════════
+function makeSlinky(cx, topY){
+  var rings = [];
+  for(var i=0;i<NUM_RINGS;i++){
+    rings.push({
+      x: cx, y: topY + i*REST_SEP,
+      vx:0,  vy:0,
+      onGround: false
+    });
+  }
+  return { rings:rings, grabbed:-1 };
+}
+
+window.resetSlinky = function(){
+  score = 0;
+  document.getElementById('sc').textContent = '0';
+  var cx = canvas.width/2 + (Math.random()-0.5)*60;
+  slinky = makeSlinky(cx, 50);
+  pathPlayback = null; motionPath = []; trailFade = 0;
+};
+
+// ── Path playback helper ─────────────────────────────────────────
+// Returns the interpolated {x,y} at float index t along pts array
+function pathPoint(pts, t){
+  if(pts.length===0) return null;
+  t = Math.max(0, Math.min(pts.length-1, t));
+  var lo=Math.floor(t), hi=Math.min(lo+1, pts.length-1), f=t-lo;
+  return { x: pts[lo].x+(pts[hi].x-pts[lo].x)*f,
+           y: pts[lo].y+(pts[hi].y-pts[lo].y)*f };
+}
+
+// ── Physics step ────────────────────────────────────────────────
+function stepSlinky(s){
+  var N = s.rings.length;
+  var W = canvas.width, H = canvas.height;
+
+  // ── Path playback: whole chain follows the path like a snake ──
+  // Paused while the user is actively dragging (finger still on screen)
+  if(pathPlayback && !drag.active){
+    pathPlayback.cursor += pathPlayback.speed * 0.0325;
+    if(pathPlayback.cursor >= pathPlayback.pts.length - 1){
+      pathPlayback = null;
+    } else {
+      // Pull each ring toward a point slightly behind the cursor on the path.
+      // Ring 0 (top) follows the cursor exactly; lower rings follow a progressively
+      // earlier point — this creates the natural whip/snake wave through the whole coil.
+      for(var pi=0; pi<N; pi++){
+        // Each ring targets a point (pi * lag) steps behind the cursor
+        var LAG    = 0.55;           // how many path-steps each ring lags behind the one above
+        var t_idx  = pathPlayback.cursor - pi * LAG;
+        if(t_idx < 0) break;         // this ring and all below haven't been reached yet
+        var tgt    = pathPoint(pathPlayback.pts, t_idx);
+        // Pull strength decreases toward the tail so bottom rings feel lighter
+        var PULL   = 0.50 * Math.pow(0.93, pi);
+        s.rings[pi].vx += (tgt.x - s.rings[pi].x) * PULL;
+        s.rings[pi].vy += (tgt.y - s.rings[pi].y) * PULL;
+      }
+    }
+  }
+
+  for(var i=0; i<N; i++){
+    var r = s.rings[i];
+    if(i === s.grabbed){ r.onGround=false; continue; }
+
+    r.vy += GRAVITY;
+    r.onGround = false;
+
+    // Spring to previous ring (above)
+    if(i > 0){
+      var prev = s.rings[i-1];
+      applySpring(r, prev);
+    }
+    // Spring to next ring (below) — bidirectional keeps stack stable
+    if(i < N-1){
+      var next = s.rings[i+1];
+      applySpring(r, next);
+    }
+
+    r.x += r.vx; r.y += r.vy;
+    r.vx *= DAMPING; r.vy *= DAMPING;
+  }
+
+  // Boundary + platform collisions
+  for(var i=0; i<N; i++){
+    if(i===s.grabbed) continue;
+    var r = s.rings[i];
+    if(r.y > H - RING_H - 6){ r.y=H-RING_H-6; r.vy*=-0.32; r.vx*=0.85; r.onGround=true; }
+    if(r.y < RING_H+2)       { r.y=RING_H+2;   r.vy*=-0.25; }
+    if(r.x < RING_W+2)       { r.x=RING_W+2;   r.vx*=-0.45; }
+    if(r.x > W-RING_W-2)     { r.x=W-RING_W-2; r.vx*=-0.45; }
+
+    for(var pi=0;pi<platforms.length;pi++) collidePlat(r, platforms[pi]);
+  }
+
+  // Hard X lock — only when NOT following a path.
+  // During path playback each ring has its own X target (diagonal/curved motion).
+  // During normal physics (resting, bouncing) the lock keeps the coil as a cylinder.
+  if(!pathPlayback){
+    var topX  = s.rings[0].x;
+    var topVx = s.rings[0].vx;
+    for(var i=1; i<N; i++){
+      if(i===s.grabbed) continue;
+      s.rings[i].x  = topX;
+      s.rings[i].vx = topVx;
+    }
+  }
+
+  // Score
+  var t=0;
+  for(var i=0;i<N;i++) if(s.rings[i].onGround) t++;
+  if(t>0){
+    score += t;
+    document.getElementById('sc').textContent = Math.floor(score/10);
+  }
+}
+
+function applySpring(a, b){
+  var dx=a.x-b.x, dy=a.y-b.y;
+  var dist=Math.sqrt(dx*dx+dy*dy)||0.001;
+  var force=(dist-REST_SEP)*SPRING_K;
+  var fx=(dx/dist)*force, fy=(dy/dist)*force;
+  a.vx-=fx; a.vy-=fy;
+  b.vx+=fx; b.vy+=fy;
+}
+
+function collidePlat(r, p){
+  var x1=p.x1,y1=p.y1,x2=p.x2,y2=p.y2;
+  var T = PLAT_THICK + RING_H;
+  var dx=x2-x1, dy=y2-y1;
+  var len2=dx*dx+dy*dy; if(len2<0.001) return;
+  var t=((r.x-x1)*dx+(r.y-y1)*dy)/len2;
+  t=Math.max(0,Math.min(1,t));
+  var cx=x1+t*dx, cy=y1+t*dy;
+  var ex=r.x-cx, ey=r.y-cy;
+  var dist=Math.sqrt(ex*ex+ey*ey);
+  if(dist<T && dist>0.001){
+    var nx=ex/dist, ny=ey/dist;
+    r.x=cx+nx*T; r.y=cy+ny*T;
+    var dot=r.vx*nx+r.vy*ny;
+    var bounce=(p.type==='bouncer')?2.2:1.35;
+    r.vx-=bounce*dot*nx; r.vy-=bounce*dot*ny;
+    r.vx*=0.80; r.vy*=0.80;
+    r.onGround=true;
+    if(p.type==='bouncer') spawnSparks(r.x, r.y, '#6bcb77', 5);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DRAW SLINKY — many stacked ovals like the real thing
+// ═══════════════════════════════════════════════════════════════
+function drawSlinky(s){
+  var N   = s.rings.length;
+  if(N<1) return;
+
+  // Draw rings bottom → top so upper rings sit visually on top
+  for(var i=N-1; i>=0; i--){
+    var r  = s.rings[i];
+    var c  = ringColor(i, N);
+    var cd = darken(c, 55);
+    var cl = lighten(c, 40);
+    var rw = RING_W, rh = RING_H;
+
+    // ── Back-half ellipse (upper arc — appears behind) ──
+    ctx.save();
+    ctx.strokeStyle = cd;
+    ctx.lineWidth   = 3;
+    ctx.beginPath();
+    ctx.ellipse(r.x, r.y, rw, rh, 0, Math.PI, Math.PI*2); // top arc
+    ctx.stroke();
+    ctx.restore();
+
+    // ── Side connectors to ring below ──
+    if(i < N-1){
+      var nb = s.rings[i+1];
+      ctx.save();
+      ctx.strokeStyle = darken(c, 35);
+      ctx.lineWidth   = 2;
+      ctx.globalAlpha = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(r.x - rw*0.97, r.y);
+      ctx.lineTo(nb.x - rw*0.97, nb.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(r.x + rw*0.97, r.y);
+      ctx.lineTo(nb.x + rw*0.97, nb.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Front-half ellipse (bottom arc — appears in front) ──
+    ctx.save();
+    ctx.strokeStyle = c;
+    ctx.lineWidth   = 3.5;
+    ctx.shadowBlur  = 4;
+    ctx.shadowColor = c;
+    ctx.beginPath();
+    ctx.ellipse(r.x, r.y, rw, rh, 0, 0, Math.PI); // bottom arc
+    ctx.stroke();
+
+    // Gloss highlight
+    ctx.strokeStyle = cl;
+    ctx.lineWidth   = 1.2;
+    ctx.shadowBlur  = 0;
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.ellipse(r.x, r.y, rw*0.55, rh*0.5, 0, 0.3, Math.PI-0.3);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Grabbed ring highlight
+  if(s.grabbed>=0 && s.grabbed<N){
+    var gr=s.rings[s.grabbed];
+    ctx.save();
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=2; ctx.globalAlpha=0.7;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.ellipse(gr.x,gr.y,RING_W+5,RING_H+5,0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DRAW PLATFORMS
+// ═══════════════════════════════════════════════════════════════
+function drawPlat(p){
+  ctx.save();
+  if(p.type==='platform'){
+    ctx.shadowBlur=10; ctx.shadowColor='#4d96ff';
+    ctx.strokeStyle='#4d96ff'; ctx.lineWidth=12; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(p.x1,p.y1); ctx.lineTo(p.x2,p.y2); ctx.stroke();
+    ctx.shadowBlur=0; ctx.strokeStyle='#aaddff88'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(p.x1,p.y1); ctx.lineTo(p.x2,p.y2); ctx.stroke();
+  } else if(p.type==='ramp'){
+    ctx.shadowBlur=7; ctx.shadowColor='#ffd93d';
+    ctx.strokeStyle='#ffd93d'; ctx.lineWidth=9; ctx.lineCap='round';
+    ctx.setLineDash([11,5]);
+    ctx.beginPath(); ctx.moveTo(p.x1,p.y1); ctx.lineTo(p.x2,p.y2); ctx.stroke();
+    ctx.setLineDash([]);
+  } else if(p.type==='bouncer'){
+    ctx.shadowBlur=12; ctx.shadowColor='#6bcb77';
+    ctx.strokeStyle='#6bcb77'; ctx.lineWidth=13; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(p.x1,p.y1); ctx.lineTo(p.x2,p.y2); ctx.stroke();
+    ctx.shadowBlur=0; ctx.strokeStyle='#ffffff55'; ctx.lineWidth=3;
+    ctx.setLineDash([5,7]);
+    ctx.beginPath(); ctx.moveTo(p.x1,p.y1); ctx.lineTo(p.x2,p.y2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════════════════════════
+function spawnSparks(x,y,c,n){
+  for(var i=0;i<n;i++)
+    particles.push({ x:x,y:y, vx:(Math.random()-0.5)*5, vy:(Math.random()-0.5)*5-1.5,
+                     life:1.0, color:c });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INPUT — grab nearest ring OR draw platform
+// ═══════════════════════════════════════════════════════════════
+function getPos(e){
+  var r=canvas.getBoundingClientRect();
+  var src=e.touches?e.touches[0]||e.changedTouches[0]:e;
+  return {x:src.clientX-r.left, y:src.clientY-r.top};
+}
+
+function nearestRing(x,y){
+  if(!slinky) return -1;
+  var best=-1, bd=1e9;
+  for(var i=0;i<slinky.rings.length;i++){
+    var r=slinky.rings[i];
+    var d=Math.hypot(x-r.x, y-r.y);
+    if(d<bd){ bd=d; best=i; }
+  }
+  // Wide grab zone (60px) — always grab top ring so whole chain follows
+  if(bd < 60){ return 0; }
+  return -1;
+}
+
+function onDown(e){
+  var pos=getPos(e);
+  drag.prevX=pos.x; drag.prevY=pos.y;
+  drag.velX=0; drag.velY=0;
+
+  if(tool==='erase'){ eraseAt(pos); return; }
+
+  if(tool==='grab'){
+    var idx=nearestRing(pos.x,pos.y);
+    if(idx>=0 && slinky){
+      drag.active=true; drag.mode='grab'; drag.grabIdx=0;
+      // Don't pin the slinky — it stays under physics while we record the path
+      slinky.grabbed = -1;
+      // Seed the path from the slinky's current centre so trail starts at slinky
+      motionPath=[{x:slinky.rings[0].x, y:slinky.rings[0].y}];
+      trailFade=1.0; pathPlayback=null;
+      wrap.classList.add('dragging');
+    }
+  } else {
+    drag.active=true; drag.mode='draw';
+    drag.startX=pos.x; drag.startY=pos.y;
+    drag.curX=pos.x; drag.curY=pos.y;
+  }
+}
+
+function onMove(e){
+  var pos=getPos(e);
+  if(!drag.active) return;
+
+  // Track velocity (EMA)
+  drag.velX = drag.velX*0.5 + (pos.x-drag.prevX)*0.5;
+  drag.velY = drag.velY*0.5 + (pos.y-drag.prevY)*0.5;
+  drag.prevX=pos.x; drag.prevY=pos.y;
+
+  if(drag.mode==='grab' && slinky && drag.grabIdx>=0){
+    // Only record the path — slinky stays still until finger lifts.
+    // Do NOT move the ring here; that's what was causing it to follow during drawing.
+    var last = motionPath[motionPath.length-1];
+    if(!last || Math.hypot(pos.x-last.x, pos.y-last.y) > 8){
+      motionPath.push({x:pos.x, y:pos.y});
+      if(motionPath.length > 80) motionPath.shift();
+    }
+    trailFade = 1.0;
+  } else if(drag.mode==='draw'){
+    drag.curX=pos.x; drag.curY=pos.y;
+  }
+}
+
+function onUp(e){
+  if(!drag.active) return;
+  var pos=getPos(e);
+
+  if(drag.mode==='grab' && slinky && drag.grabIdx>=0){
+    slinky.grabbed = -1;
+    wrap.classList.remove('dragging');
+    // Start path playback: top ring will chase along the recorded path
+    if(motionPath.length > 2){
+      // Work out a per-frame cursor speed from the drag velocity magnitude
+      var spd = Math.max(2, Math.min(14, Math.hypot(drag.velX, drag.velY) * 0.9 + 3));
+      pathPlayback = { pts: motionPath.slice(), cursor: 0, speed: spd };
+    } else {
+      // No real path — just give it a velocity nudge
+      slinky.rings[drag.grabIdx].vx = drag.velX * 1.4;
+      slinky.rings[drag.grabIdx].vy = drag.velY * 1.4;
+    }
+    // trailFade stays at 1 — decays in render loop
+  } else if(drag.mode==='draw'){
+    var dx=drag.curX-drag.startX, dy=drag.curY-drag.startY;
+    if(Math.sqrt(dx*dx+dy*dy)>12)
+      platforms.push({x1:drag.startX,y1:drag.startY,x2:drag.curX,y2:drag.curY,type:tool});
+  }
+  drag.active=false; drag.mode=null; drag.grabIdx=-1;
+  if(slinky) slinky.grabbed=-1;
+}
+
+function eraseAt(pos){
+  platforms=platforms.filter(function(p){
+    var dx=p.x2-p.x1,dy=p.y2-p.y1,len2=dx*dx+dy*dy||1;
+    var t=Math.max(0,Math.min(1,((pos.x-p.x1)*dx+(pos.y-p.y1)*dy)/len2));
+    return Math.hypot(pos.x-(p.x1+t*dx),pos.y-(p.y1+t*dy))>18;
+  });
+}
+
+canvas.addEventListener('mousedown',  onDown);
+canvas.addEventListener('mousemove',  onMove);
+canvas.addEventListener('mouseup',    onUp);
+canvas.addEventListener('mouseleave', function(){ if(drag.active) onUp({}); });
+canvas.addEventListener('touchstart', function(e){e.preventDefault();onDown(e);},{passive:false});
+canvas.addEventListener('touchmove',  function(e){e.preventDefault();onMove(e);},{passive:false});
+canvas.addEventListener('touchend',   function(e){e.preventDefault();onUp(e);},  {passive:false});
+
+// ═══════════════════════════════════════════════════════════════
+//  ACTION BUTTONS
+// ═══════════════════════════════════════════════════════════════
+window.buildStairs = function(){
+  platforms=[];
+  var W=canvas.width, H=canvas.height;
+  var steps=7, sw=W*0.11;
+  var gx=(W*0.86-sw)/(steps-1);
+  var sy=H*0.16, ey=H*0.78, sh=(ey-sy)/(steps-1);
+  for(var i=0;i<steps;i++){
+    var x1=W*0.07+i*gx, y=sy+i*sh;
+    platforms.push({x1:x1,y1:y,x2:x1+sw,y2:y,type:'platform'});
+  }
+  platforms.push({x1:8,y1:H-20,x2:W-8,y2:H-20,type:'platform'});
+};
+
+window.addFloor = function(){
+  var W=canvas.width,H=canvas.height,lo=H*0.35;
+  platforms.forEach(function(p){if(p.y1>lo)lo=p.y1;});
+  var y=Math.min(lo+55,H-40);
+  platforms.push({x1:W*0.08,y1:y,x2:W*0.92,y2:y,type:'platform'});
+};
+
+window.clearAll = function(){
+  platforms=[]; slinky=null; particles=[];
+  score=0; document.getElementById('sc').textContent='0';
+  pathPlayback=null; motionPath=[]; trailFade=0;
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER LOOP
+// ═══════════════════════════════════════════════════════════════
+function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Subtle dot grid
+  ctx.save(); ctx.fillStyle='#ffffff05';
+  for(var gx=40;gx<canvas.width;gx+=50)
+    for(var gy=40;gy<canvas.height;gy+=50){
+      ctx.beginPath(); ctx.arc(gx,gy,1,0,Math.PI*2); ctx.fill();
+    }
+  ctx.restore();
+
+  for(var i=0;i<platforms.length;i++) drawPlat(platforms[i]);
+
+  // Platform draw preview
+  if(drag.active && drag.mode==='draw'){
+    var pc=tool==='platform'?'#4d96ff':tool==='ramp'?'#ffd93d':'#6bcb77';
+    ctx.save();
+    ctx.strokeStyle=pc+'99'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.setLineDash([10,6]);
+    ctx.beginPath(); ctx.moveTo(drag.startX,drag.startY); ctx.lineTo(drag.curX,drag.curY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // Motion path trail
+  if(motionPath.length > 1 && trailFade > 0){
+    // Fade out after release
+    if(!drag.active || drag.mode !== 'grab') trailFade = Math.max(0, trailFade - 0.025);
+    ctx.save();
+    ctx.globalAlpha = trailFade * 0.85;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 2.5;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.setLineDash([6, 7]);
+    ctx.lineDashOffset = -Date.now() * 0.04 % 13; // animate marching ants
+    ctx.shadowBlur  = 8;
+    ctx.shadowColor = '#ffffff88';
+    ctx.beginPath();
+    ctx.moveTo(motionPath[0].x, motionPath[0].y);
+    for(var mp=1; mp<motionPath.length; mp++)
+      ctx.lineTo(motionPath[mp].x, motionPath[mp].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Arrowhead at the tip
+    var tip  = motionPath[motionPath.length-1];
+    var tip2 = motionPath[Math.max(0,motionPath.length-3)];
+    var ang  = Math.atan2(tip.y-tip2.y, tip.x-tip2.x);
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.moveTo(tip.x + Math.cos(ang)*10, tip.y + Math.sin(ang)*10);
+    ctx.lineTo(tip.x + Math.cos(ang+2.4)*7, tip.y + Math.sin(ang+2.4)*7);
+    ctx.lineTo(tip.x + Math.cos(ang-2.4)*7, tip.y + Math.sin(ang-2.4)*7);
+    ctx.closePath();
+    ctx.fill();
+    // Finger cursor dot while dragging
+    if(drag.active && drag.mode==='grab'){
+      var fp = motionPath[motionPath.length-1];
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#fff';
+      ctx.shadowBlur = 14; ctx.shadowColor = '#ffe066';
+      ctx.beginPath(); ctx.arc(fp.x, fp.y, 6, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(trailFade <= 0) motionPath = [];
+  }
+
+  if(slinky){
+    stepSlinky(slinky);
+    drawSlinky(slinky);
+    // Auto-respawn if slinky falls off
+    if(slinky.rings[0].y > canvas.height + 120) window.resetSlinky();
+  }
+
+  // Particles
+  particles=particles.filter(function(p){return p.life>0;});
+  for(var i=0;i<particles.length;i++){
+    var p=particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.04;
+    var r=Math.max(0.01, 3*p.life);
+    ctx.save();
+    ctx.globalAlpha=p.life*0.85; ctx.fillStyle=p.color;
+    ctx.shadowBlur=5; ctx.shadowColor=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+window.buildStairs();
+window.resetSlinky();
+// Hide hint by default (grab mode)
+document.getElementById('hint').style.display = 'none';
+loop();
+
+})();
+</script>
+</body>
+</html>
